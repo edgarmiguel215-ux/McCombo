@@ -1057,7 +1057,7 @@ public class Sistema extends javax.swing.JFrame {
     LimpiarCliente();
     ListarCliente();
 
-    Mensajes.info("Cliente Registrado con Exito");
+    Mensajes.info("Cliente Registrado.");
 //        if(!"".equals(txtDniCliente.getText()) || !"".equals(txtNombreCliente.getText()) || !"".equals(txtTelefonoCliente.getText()) || !"".equals(txtDireccionCliente.getText())){
 //            cl.setDni(Integer.parseInt(txtDniCliente.getText()));
 //            cl.setNombre(txtNombreCliente.getText());
