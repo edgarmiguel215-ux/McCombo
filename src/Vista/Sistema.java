@@ -1318,5 +1318,8 @@ public class Sistema extends javax.swing.JFrame {
         txtTelefonoCliente.setText("");
         txtDireccionCliente.setText("");
         txtRazonCliente.setText("");
+        /*
+        Prueba funcionalidad del Git Hub.
+        */
     }
 }
