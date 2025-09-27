@@ -1,8 +1,9 @@
-
 package Vista;
 
 import Modelo.Cliente;
 import Modelo.ClienteDao;
+import Modelo.Proveedor;
+import Modelo.ProveedorDao;
 import com.milibreria.utils.Mensajes;
 import com.milibreria.utils.Validador;
 import java.util.List;
@@ -14,18 +15,20 @@ import javax.swing.table.DefaultTableModel;
  * @author salga
  */
 public class Sistema extends javax.swing.JFrame {
+
     Cliente cl = new Cliente();
     ClienteDao client = new ClienteDao();
+    Proveedor pr = new Proveedor();
+    ProveedorDao PrDao = new ProveedorDao();
     DefaultTableModel modelo = new DefaultTableModel();
 
-    
     public Sistema() {
         initComponents();
         this.setLocationRelativeTo(null);
         txtIdCliente.setVisible(false);
     }
-    
-    public void ListarCliente(){
+
+    public void ListarCliente() {
         List<Cliente> ListarCl = client.ListarCliente();
         modelo = (DefaultTableModel) TableCliente.getModel();
         Object[] ob = new Object[6];
@@ -41,12 +44,29 @@ public class Sistema extends javax.swing.JFrame {
         TableCliente.setModel(modelo);
     }
 
-    public void LimpiarTable(){
-        for (int i = 0 ; i < modelo.getRowCount(); i++){
+    public void ListarProveedor() {
+        List<Proveedor> ListarPr = PrDao.ListarProveedor();
+        modelo = (DefaultTableModel) TableProveedor.getModel();
+        Object[] ob = new Object[6];
+        for (int i = 0; i < ListarPr.size(); i++) {
+            ob[0] = ListarPr.get(i).getId();
+            ob[1] = ListarPr.get(i).getRuc();
+            ob[2] = ListarPr.get(i).getNombre();
+            ob[3] = ListarPr.get(i).getTelefono();
+            ob[4] = ListarPr.get(i).getDireccion();
+            ob[5] = ListarPr.get(i).getRazon();
+            modelo.addRow(ob);
+        }
+        TableProveedor.setModel(modelo);
+    }
+
+    public void LimpiarTable() {
+        for (int i = 0; i < modelo.getRowCount(); i++) {
             modelo.removeRow(i);
-            i = i-1;
+            i = i - 1;
         }
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -187,6 +207,11 @@ public class Sistema extends javax.swing.JFrame {
 
         jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/proveedor.png"))); // NOI18N
         jButton3.setText("Preoveedor");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
 
         jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/producto.png"))); // NOI18N
         jButton4.setText("Productos");
@@ -521,21 +546,20 @@ public class Sistema extends javax.swing.JFrame {
                                 .addGap(18, 18, 18)
                                 .addComponent(txtIdCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 36, Short.MAX_VALUE))))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel15)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGap(16, 16, 16)
-                                .addComponent(btnEliminarCliente)))
+                        .addComponent(jLabel15)
                         .addGap(18, 18, 18)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtRazonCliente)
                             .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(btnGuardarCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(btnGuardarCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(btnEliminarCliente))
                                 .addGap(33, 33, 33)
-                                .addComponent(btnEditarCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 34, Short.MAX_VALUE)
-                                .addComponent(btnNuevoCliente)))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(btnNuevoCliente)
+                                    .addComponent(btnEditarCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 614, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -564,10 +588,11 @@ public class Sistema extends javax.swing.JFrame {
                     .addComponent(jLabel15)
                     .addComponent(txtRazonCliente, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(30, 30, 30)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnGuardarCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnEditarCliente))
+                .addGap(37, 37, 37)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(btnGuardarCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btnEditarCliente))
                     .addComponent(btnEliminarCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnNuevoCliente))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -599,19 +624,25 @@ public class Sistema extends javax.swing.JFrame {
 
             },
             new String [] {
-                "RUC", "NOMBRE", "TELÉFONO", "DIRECCIÓN", "RAZON SOCIAL"
+                "ID", "RUC", "NOMBRE", "TELÉFONO", "DIRECCIÓN", "RAZON SOCIAL"
             }
         ));
         jScrollPane3.setViewportView(TableProveedor);
         if (TableProveedor.getColumnModel().getColumnCount() > 0) {
-            TableProveedor.getColumnModel().getColumn(0).setPreferredWidth(40);
-            TableProveedor.getColumnModel().getColumn(1).setPreferredWidth(100);
-            TableProveedor.getColumnModel().getColumn(2).setPreferredWidth(50);
-            TableProveedor.getColumnModel().getColumn(3).setPreferredWidth(80);
-            TableProveedor.getColumnModel().getColumn(4).setPreferredWidth(70);
+            TableProveedor.getColumnModel().getColumn(0).setPreferredWidth(29);
+            TableProveedor.getColumnModel().getColumn(1).setPreferredWidth(40);
+            TableProveedor.getColumnModel().getColumn(2).setPreferredWidth(100);
+            TableProveedor.getColumnModel().getColumn(3).setPreferredWidth(50);
+            TableProveedor.getColumnModel().getColumn(4).setPreferredWidth(80);
+            TableProveedor.getColumnModel().getColumn(5).setPreferredWidth(70);
         }
 
         btnguardarProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/GuardarTodo.png"))); // NOI18N
+        btnguardarProveedor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnguardarProveedorActionPerformed(evt);
+            }
+        });
 
         btnEditarProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Actualizar.jpg"))); // NOI18N
 
@@ -1027,37 +1058,37 @@ public class Sistema extends javax.swing.JFrame {
 
     private void btnGuardarClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarClienteActionPerformed
         // TODO add your handling code here:                                                  
-    // Validar campos
-    if (Validador.esCampoVacio(txtDniCliente.getText()) ||
-        Validador.esCampoVacio(txtNombreCliente.getText()) ||
-        Validador.esCampoVacio(txtTelefonoCliente.getText()) ||
-        Validador.esCampoVacio(txtDireccionCliente.getText())) {
-        
-        Mensajes.error("Todos los campos son obligatorios");
-        return;
-    }
+        // Validar campos
+        if (Validador.esCampoVacio(txtDniCliente.getText())
+                || Validador.esCampoVacio(txtNombreCliente.getText())
+                || Validador.esCampoVacio(txtTelefonoCliente.getText())
+                || Validador.esCampoVacio(txtDireccionCliente.getText())) {
 
-    // Validar que DNI y Teléfono sean números
-    if (!Validador.esNumero(txtDniCliente.getText()) || 
-        !Validador.esNumero(txtTelefonoCliente.getText())) {
-        
-        Mensajes.error("DNI y Teléfono deben ser numéricos");
-        return;
-    }
+            Mensajes.error("Todos los campos son obligatorios");
+            return;
+        }
 
-    // Si pasa las validaciones, registrar
-    cl.setDni(Integer.parseInt(txtDniCliente.getText()));
-    cl.setNombre(txtNombreCliente.getText());
-    cl.setTelefono(Integer.parseInt(txtTelefonoCliente.getText()));
-    cl.setDireccion(txtDireccionCliente.getText());
-    cl.setRazon(txtRazonCliente.getText());
+        // Validar que DNI y Teléfono sean números
+        if (!Validador.esNumero(txtDniCliente.getText())
+                || !Validador.esNumero(txtTelefonoCliente.getText())) {
 
-    client.RegistrarCliente(cl);
-    LimpiarTable();
-    LimpiarCliente();
-    ListarCliente();
+            Mensajes.error("DNI y Teléfono deben ser numéricos");
+            return;
+        }
 
-    Mensajes.info("Cliente Registrado.");
+        // Si pasa las validaciones, registrar
+        cl.setDni(Integer.parseInt(txtDniCliente.getText()));
+        cl.setNombre(txtNombreCliente.getText());
+        cl.setTelefono(Integer.parseInt(txtTelefonoCliente.getText()));
+        cl.setDireccion(txtDireccionCliente.getText());
+        cl.setRazon(txtRazonCliente.getText());
+
+        client.RegistrarCliente(cl);
+        LimpiarTable();
+        LimpiarCliente();
+        ListarCliente();
+
+        Mensajes.info("Cliente Registrado.");
 //        if(!"".equals(txtDniCliente.getText()) || !"".equals(txtNombreCliente.getText()) || !"".equals(txtTelefonoCliente.getText()) || !"".equals(txtDireccionCliente.getText())){
 //            cl.setDni(Integer.parseInt(txtDniCliente.getText()));
 //            cl.setNombre(txtNombreCliente.getText());
@@ -1077,18 +1108,18 @@ public class Sistema extends javax.swing.JFrame {
     private void TableClienteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TableClienteMouseClicked
         // TODO add your handling code here:
         int fila = TableCliente.rowAtPoint(evt.getPoint());
-        txtIdCliente.setText(TableCliente.getValueAt(fila, 0) .toString());
-        txtDniCliente.setText(TableCliente.getValueAt(fila, 1) .toString());
-        txtNombreCliente.setText(TableCliente.getValueAt(fila, 2) .toString());
-        txtTelefonoCliente.setText(TableCliente.getValueAt(fila, 3) .toString());
-        txtDireccionCliente.setText(TableCliente.getValueAt(fila, 4) .toString());
-        txtRazonCliente.setText(TableCliente.getValueAt(fila, 5) .toString());
-        
+        txtIdCliente.setText(TableCliente.getValueAt(fila, 0).toString());
+        txtDniCliente.setText(TableCliente.getValueAt(fila, 1).toString());
+        txtNombreCliente.setText(TableCliente.getValueAt(fila, 2).toString());
+        txtTelefonoCliente.setText(TableCliente.getValueAt(fila, 3).toString());
+        txtDireccionCliente.setText(TableCliente.getValueAt(fila, 4).toString());
+        txtRazonCliente.setText(TableCliente.getValueAt(fila, 5).toString());
+
     }//GEN-LAST:event_TableClienteMouseClicked
 
     private void btnEliminarClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarClienteActionPerformed
         // TODO add your handling code here:
-         if (!"".equals(txtIdCliente.getText())) {
+        if (!"".equals(txtIdCliente.getText())) {
             int pregunta = JOptionPane.showConfirmDialog(null, "Estas seguro de eliminar");
             if (pregunta == 0) {
                 int id = Integer.parseInt(txtIdCliente.getText());
@@ -1096,7 +1127,7 @@ public class Sistema extends javax.swing.JFrame {
                 LimpiarTable();
                 LimpiarCliente();
                 ListarCliente();
-                
+
             }
         }
     }//GEN-LAST:event_btnEliminarClienteActionPerformed
@@ -1112,7 +1143,7 @@ public class Sistema extends javax.swing.JFrame {
                 cl.setNombre(txtNombreCliente.getText());
                 cl.setTelefono(Integer.parseInt(txtTelefonoCliente.getText()));
                 cl.setDireccion(txtDireccionCliente.getText());
-                cl.setRazon(txtRazonCliente.getText()); 
+                cl.setRazon(txtRazonCliente.getText());
                 cl.setId(Integer.parseInt(txtIdCliente.getText()));
                 client.ModificarCliente(cl);
                 JOptionPane.showMessageDialog(null, "Cliente Modificado");
@@ -1123,7 +1154,7 @@ public class Sistema extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(null, "Los campos estan vacios");
             }
         }
-     /*                                          
+        /*                                          
     // Validar que se haya seleccionado una fila
     if (txtIdCliente.getText().isEmpty()) {
         JOptionPane.showMessageDialog(null, "Seleccione una fila");
@@ -1156,7 +1187,7 @@ public class Sistema extends javax.swing.JFrame {
     } catch (NumberFormatException e) {
         JOptionPane.showMessageDialog(null, "Ingrese valores numéricos válidos en DNI, Teléfono.");
     }
-*/
+         */
 
 //        if ("".equals(txtIdCliente.getText())) {
 //            JOptionPane.showMessageDialog(null, "Seleccione una fila");
@@ -1186,6 +1217,31 @@ public class Sistema extends javax.swing.JFrame {
         // TODO add your handling code here:
         LimpiarCliente();
     }//GEN-LAST:event_btnNuevoClienteActionPerformed
+
+    private void btnguardarProveedorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnguardarProveedorActionPerformed
+        // TODO add your handling code here:
+        if (!"".equals(txtRucProveedor.getText()) || !"".equals(txtNombreProveedor.getText())
+                || !"".equals(txtTelefonoProveedor.getText()) || !"".equals(txtDireccionProveedor.getText())
+                || !"".equals(txtRazonProveedor.getText())) {
+            pr.setRuc(Integer.parseInt(txtRucProveedor.getText()));
+            pr.setNombre(txtNombreProveedor.getText());
+            pr.setTelefono(Integer.parseInt(txtTelefonoProveedor.getText()));
+            pr.setDireccion(txtDireccionProveedor.getText());
+            pr.setRazon(txtRazonProveedor.getText());
+            PrDao.RegistrarProveedor(pr);
+        } else {
+            JOptionPane.showConfirmDialog(null, "Los campos estan vacios");
+        }
+
+    }//GEN-LAST:event_btnguardarProveedorActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        LimpiarTable();
+        ListarProveedor();
+       
+        jTabbedPane1.setSelectedIndex(2);
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1331,7 +1387,7 @@ public class Sistema extends javax.swing.JFrame {
     private javax.swing.JTextField txtTelefonoCliente;
     private javax.swing.JTextField txtTelefonoProveedor;
     // End of variables declaration//GEN-END:variables
-    private void LimpiarCliente(){
+    private void LimpiarCliente() {
         txtIdCliente.setText("");
         txtDniCliente.setText("");
         txtNombreCliente.setText("");
@@ -1342,6 +1398,6 @@ public class Sistema extends javax.swing.JFrame {
         Prueba funcionalidad del Git Hub.
         Segunda Prueba de Funcionalidad.
         Tercera prueba de Funcionalidad.
-        */
+         */
     }
 }
