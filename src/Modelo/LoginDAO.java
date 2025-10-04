@@ -24,6 +24,7 @@ public class LoginDAO {
             l.setNombre(rs.getString("nombre"));
             l.setCorreo(rs.getString("correo"));
             l.setPass(rs.getString("pass"));
+            l.setRol(rs.getString("rol"));
             
         }
     } catch (Exception e){

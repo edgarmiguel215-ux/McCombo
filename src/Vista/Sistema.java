@@ -15,6 +15,8 @@ import javax.swing.table.DefaultTableModel;
  * @author salga
  */
 public class Sistema extends javax.swing.JFrame {
+    
+    
 
     Cliente cl = new Cliente();
     ClienteDao client = new ClienteDao();
@@ -66,6 +68,8 @@ public class Sistema extends javax.swing.JFrame {
             i = i - 1;
         }
     }
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -190,7 +194,7 @@ public class Sistema extends javax.swing.JFrame {
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Nventa.png"))); // NOI18N
-        jButton1.setText("Nueba Venta");
+        jButton1.setText("Nueva Venta");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
@@ -1015,9 +1019,9 @@ public class Sistema extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
-        LimpiarTable();
-        ListarCliente();
-        jTabbedPane1.setSelectedIndex(1);
+//        LimpiarTable();
+//        ListarCliente();
+//        jTabbedPane1.setSelectedIndex(1);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void txtDescripcionVentaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtDescripcionVentaActionPerformed

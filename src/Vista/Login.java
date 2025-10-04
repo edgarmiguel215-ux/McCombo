@@ -12,6 +12,7 @@ public class Login extends javax.swing.JFrame {
     public Login() {
         initComponents();
         this.setLocationRelativeTo(null);
+        
     }
     public void validar(){
         String correo = txtCorreo.getText();
@@ -21,13 +22,22 @@ public class Login extends javax.swing.JFrame {
             LoginDAO login = new LoginDAO();
             lg = login.log(correo, pass);
             if (lg.getCorreo() != null && lg.getPass() != null){
-                Sistema sis = new Sistema();
+                String nombre = lg.getNombre();
+                String rol = lg.getRol();
+                
+                SistemaPrincipal sis = new SistemaPrincipal(nombre, rol);
                 sis.setVisible(true);
                 dispose();
             }else{
                 JOptionPane.showMessageDialog(null, "Correo o Contraseña Incorrecta");
             }
         }
+        if (lg.getCorreo() != null && lg.getPass() != null) {
+        String nombre = lg.getNombre(); // o getUsuario() si así lo llamaste
+        String rol = lg.getRol();       // asegúrate de tener este campo en tu clase login
+        }
+        
+
     }
 
     /**
