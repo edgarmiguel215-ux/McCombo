@@ -1,6 +1,8 @@
 
 package Vista;
 
+import javax.swing.JButton;
+
 
 public class SistemaPrincipal extends javax.swing.JFrame {
 
@@ -12,6 +14,8 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         this.setLocationRelativeTo(null); // Centrar ventana
     
     }
+
+     
 
     public SistemaPrincipal(String nombre, String rol) {
     initComponents();
@@ -35,7 +39,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         jPanel5 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
+        btnVentasAndPedidos = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
@@ -84,8 +88,13 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Nventa.png"))); // NOI18N
-        jButton1.setText("Ventas y pedidos ");
+        btnVentasAndPedidos.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Nventa.png"))); // NOI18N
+        btnVentasAndPedidos.setText("Ventas y pedidos ");
+        btnVentasAndPedidos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnVentasAndPedidosActionPerformed(evt);
+            }
+        });
 
         jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Inventario.png"))); // NOI18N
         jButton2.setText("Inventario ");
@@ -116,14 +125,14 @@ public class SistemaPrincipal extends javax.swing.JFrame {
                                 .addComponent(jButton2)))
                         .addGap(36, 36, 36))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnVentasAndPedidos, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(16, 16, 16))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(126, 126, 126)
-                .addComponent(jButton1)
+                .addComponent(btnVentasAndPedidos)
                 .addGap(34, 34, 34)
                 .addComponent(jButton2)
                 .addGap(48, 48, 48)
@@ -265,6 +274,13 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             
     }//GEN-LAST:event_jButton3ActionPerformed
 
+    private void btnVentasAndPedidosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVentasAndPedidosActionPerformed
+        // TODO add your handling code here:
+        VentasAndPedidos ventana = new VentasAndPedidos();
+        ventana.setVisible(true);
+        
+    }//GEN-LAST:event_btnVentasAndPedidosActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -301,7 +317,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton btnVentasAndPedidos;
     private javax.swing.JButton jButton10;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
