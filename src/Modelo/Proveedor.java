@@ -4,19 +4,23 @@ package Modelo;
 public class Proveedor {
     
     private int id;
-    private int ruc;
     private String nombre;
-    private int telefono;
+    private String tipo;
+    private String numeroDocumento;
+    private String telefono;
     private String direccion;
     private String razon;
+    
+    
 
     public Proveedor() {
     }
 
-    public Proveedor(int id, int ruc, String nombre, int telefono, String direccion, String razon) {
+    public Proveedor(int id, String nombre, String tipo, String numeroDocumento, String telefono, String direccion, String razon) {
         this.id = id;
-        this.ruc = ruc;
         this.nombre = nombre;
+        this.tipo = tipo;
+        this.numeroDocumento = numeroDocumento;
         this.telefono = telefono;
         this.direccion = direccion;
         this.razon = razon;
@@ -30,14 +34,6 @@ public class Proveedor {
         this.id = id;
     }
 
-    public int getRuc() {
-        return ruc;
-    }
-
-    public void setRuc(int ruc) {
-        this.ruc = ruc;
-    }
-
     public String getNombre() {
         return nombre;
     }
@@ -46,11 +42,27 @@ public class Proveedor {
         this.nombre = nombre;
     }
 
-    public int getTelefono() {
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public String getNumeroDocumento() {
+        return numeroDocumento;
+    }
+
+    public void setNumeroDocumento(String numeroDocumento) {
+        this.numeroDocumento = numeroDocumento;
+    }
+
+    public String getTelefono() {
         return telefono;
     }
 
-    public void setTelefono(int telefono) {
+    public void setTelefono(String telefono) {
         this.telefono = telefono;
     }
 
@@ -69,6 +81,11 @@ public class Proveedor {
     public void setRazon(String razon) {
         this.razon = razon;
     }
+
     
-    
+    @Override
+    public String toString() {
+        return nombre; // o el campo que contenga el nombre del proveedor
+    }
+
 }

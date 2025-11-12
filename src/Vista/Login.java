@@ -6,6 +6,8 @@ import Modelo.LoginDAO;
 import javax.swing.JOptionPane;
 
 public class Login extends javax.swing.JFrame {
+    
+    
     login lg = new login();
     LoginDAO login = new LoginDAO();
  
@@ -15,30 +17,33 @@ public class Login extends javax.swing.JFrame {
         
     }
     public void validar(){
-        String correo = txtCorreo.getText();
-        String pass = String.valueOf(txtPass.getPassword());
-        if ( !"".equals(correo) || !"".equals(pass)){
-            login lg = new login();
-            LoginDAO login = new LoginDAO();
-            lg = login.log(correo, pass);
-            if (lg.getCorreo() != null && lg.getPass() != null){
-                String nombre = lg.getNombre();
-                String rol = lg.getRol();
-                
-                SistemaPrincipal sis = new SistemaPrincipal(nombre, rol);
-                sis.setVisible(true);
-                dispose();
-            }else{
-                JOptionPane.showMessageDialog(null, "Correo o Contraseña Incorrecta");
-            }
-        }
-        if (lg.getCorreo() != null && lg.getPass() != null) {
-        String nombre = lg.getNombre(); // o getUsuario() si así lo llamaste
-        String rol = lg.getRol();       // asegúrate de tener este campo en tu clase login
-        }
-        
+    String correo = txtCorreo.getText();
+    String pass = String.valueOf(txtPass.getPassword());
+    
+    if (!correo.isEmpty() && !pass.isEmpty()) {
+        login lg = new login();
+        LoginDAO loginDAO = new LoginDAO();
+        lg = loginDAO.log(correo, pass);
 
+        if (lg.getCorreo() != null && lg.getPass() != null){
+            String nombre = lg.getNombre();
+            String rol = lg.getRol();
+
+            // Abrir SistemaPrincipal pasando nombre y rol
+            SistemaPrincipal sis = new SistemaPrincipal(nombre, rol);
+            sis.setVisible(true);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(null, "Correo o Contraseña Incorrecta");
+        }
+    } else {
+        JOptionPane.showMessageDialog(null, "Debes llenar todos los campos");
     }
+}
+   
+    
+    
+    
 
     /**
      * This method is called from within the constructor to initialize the form.

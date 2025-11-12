@@ -24,7 +24,10 @@ public class LoginDAO {
             l.setNombre(rs.getString("nombre"));
             l.setCorreo(rs.getString("correo"));
             l.setPass(rs.getString("pass"));
-            l.setRol(rs.getString("rol"));
+            l.setRol(rs.getString("rol").trim()); // elimina espacios al inicio y al final
+            System.out.println("ROL desde DB: '" + l.getRol() + "'"); // depuración
+
+            
             
         }
     } catch (Exception e){
