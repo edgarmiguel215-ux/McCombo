@@ -7,159 +7,209 @@ import java.util.*;
 
 public class InventarioDAO {
     
-    
-    Connection con;
-    PreparedStatement ps;
-    ResultSet rs;
     Conexion cn = new Conexion();
 
 
-    // Actualiza o inserta un registro de inventario desde una compra
-    public void actualizarInventarioDesdeCompra(CompraDetalle detalle) {
-        String sqlBuscar = "SELECT stock_actual FROM inventario WHERE idProducto = ?";
-        String sqlInsertar = "INSERT INTO inventario (idProducto, nombre, unidad, stock_actual, costo_unitario, valor_inventario, idCompra, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String sqlActualizar = "UPDATE inventario SET stock_actual = ?, unidad = ?, costo_unitario = ?, valor_inventario = ?, idCompra = ?, estado = ? WHERE idProducto = ?";
+    // -------------------------- LISTAR INVENTARIO --------------------------
+    public List<Inventario> listar() {
+    List<Inventario> lista = new ArrayList<>();
+    String sql = "SELECT id_articulo, nombre, unidad, stock_actual, costo_unitario, valor_inventario, estado FROM inventario ORDER BY id_articulo DESC";
 
-        try {
-            con = cn.getConnection();
-            ps = con.prepareStatement(sqlBuscar);
-            ps.setInt(1, detalle.getIdProducto());
-            rs = ps.executeQuery();
+    try (Connection con = cn.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) {
-                int stockActual = rs.getInt("stock_actual");
-                int nuevoStock = stockActual + detalle.getCantidad();
-                double nuevoValor = nuevoStock * detalle.getPrecio();
-
-                ps = con.prepareStatement(sqlActualizar);
-                ps.setInt(1, nuevoStock);
-                ps.setString(2, detalle.getUnidad());
-                ps.setDouble(3, detalle.getPrecio());
-                ps.setDouble(4, nuevoValor);
-                ps.setInt(5, detalle.getIdCompra());
-                ps.setString(6, detalle.getEstado());
-                ps.setInt(7, detalle.getIdProducto());
-                ps.executeUpdate();
-            } else {
-                ps = con.prepareStatement(sqlInsertar);
-                ps.setInt(1, detalle.getIdProducto());
-                ps.setString(2, detalle.getArticulo());
-                ps.setString(3, detalle.getUnidad());
-                ps.setInt(4, 0); // stock mínimo
-                ps.setInt(5, detalle.getCantidad());
-                ps.setDouble(6, detalle.getPrecio());
-                ps.setDouble(7, detalle.getCantidad() * detalle.getPrecio());
-                ps.setInt(8, detalle.getIdCompra());
-                ps.setString(9, detalle.getEstado());
-                ps.executeUpdate();
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error al actualizar inventario: " + e.getMessage());
-        } finally {
-            try { if (ps != null) ps.close(); if (con != null) con.close(); } catch (SQLException ex) {}
-        }
-    }
-
-    // Devuelve todo el inventario para mostrarlo en la tabla
-    public List<InventarioItem> obtenerTodos() {
-        List<InventarioItem> lista = new ArrayList<>();
-        String sql = "SELECT idCompra, nombre, unidad, stock_actual, costo_unitario, valor_inventario, estado FROM inventario";
-
-        try (Connection con = cn.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                InventarioItem item = new InventarioItem();
-                item.setIdCompra(rs.getInt("idCompra"));
-                item.setNombre(rs.getString("nombre"));
-                item.setUnidad(rs.getString("unidad"));
-                
-                item.setStockActual(rs.getInt("stock_actual"));
-                item.setCostoUnitario(rs.getDouble("costo_unitario"));
-                item.setValorInventario(rs.getDouble("valor_inventario"));
-                item.setEstado(rs.getString("estado"));
-                lista.add(item);
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error al obtener inventario: " + e.getMessage());
+        while (rs.next()) {
+            Inventario i = new Inventario();
+            i.setIdCompra(rs.getInt("id_articulo")); // o usa setIdArticulo si tienes ese campo
+            i.setNombre(rs.getString("nombre"));
+            i.setUnidad(rs.getString("unidad"));
+            i.setStockActual(rs.getInt("stock_actual"));
+            i.setCostoUnitario(rs.getDouble("costo_unitario"));
+            i.setValorInventario(rs.getDouble("valor_inventario"));
+            i.setEstado(rs.getString("estado"));
+            lista.add(i);
         }
 
-        return lista;
+    } catch (SQLException e) {
+        System.err.println("Error listar inventario: " + e.getMessage());
     }
 
-    // 🆕 === MÉTODOS NUEVOS PARA SINCRONIZACIÓN COMPLETA ===
-
-    // 1️⃣ Buscar un artículo por nombre
-     // En obtenerPorNombre, asegúrate de cargar idCompra
-    public InventarioItem obtenerPorNombre(String nombre) {
-        String sql = "SELECT * FROM inventario WHERE nombre = ?";
-        InventarioItem item = null;
-        try (Connection con = cn.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, nombre);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    item = new InventarioItem();
-                    item.setIdCompra(rs.getInt("idCompra")); // ✅ Cargar idCompra
-                    item.setNombre(rs.getString("nombre"));
-                    item.setUnidad(rs.getString("unidad"));
-                    
-                    item.setStockActual(rs.getInt("stock_actual"));
-                    item.setCostoUnitario(rs.getDouble("costo_unitario"));
-                    item.setValorInventario(rs.getDouble("valor_inventario"));
-                    item.setEstado(rs.getString("estado"));
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error en obtenerPorNombre: " + e.getMessage());
-        }
-        return item;
-    }
-
-    // Insertar nuevo artículo en inventario
-    public void insertar(InventarioItem item) {
-        String sql = "INSERT INTO inventario (idCompra, nombre, unidad, stock_min, stock_actual, costo_unitario, valor_inventario, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection con = cn.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, item.getIdCompra());
-            ps.setString(2, item.getNombre());
-            ps.setString(3, item.getUnidad());
-            ps.setInt(4, 0); // stock mínimo
-            ps.setInt(5, item.getStockActual());
-            ps.setDouble(6, item.getCostoUnitario());
-            ps.setDouble(7, item.getValorInventario());
-            ps.setString(8, item.getEstado());
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            System.err.println("Error al insertar inventario: " + e.getMessage());
-        }
-    }
-
-    // Actualizar artículo existente
-     public void actualizar(InventarioItem item) {
-        String sql = "UPDATE inventario SET stock_actual=?, costo_unitario=?, valor_inventario=?, estado=?, idCompra=? WHERE nombre=?";
-        try (Connection con = cn.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, item.getStockActual());
-            ps.setDouble(2, item.getCostoUnitario());
-            ps.setDouble(3, item.getValorInventario());
-            ps.setString(4, item.getEstado());
-            ps.setInt(5, item.getIdCompra()); // ✅ Agregar idCompra
-            ps.setString(6, item.getNombre());
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            System.err.println("Error al actualizar inventario: " + e.getMessage());
-        }
-    }
-     
+    return lista;
 }
 
+    
+    // -------------------------- EDITAR COMPRA --------------------------
+   public void actualizarInventarioDespuesDeEditar(Compra original, Compra editada) {
+    try (Connection con = cn.getConnection()) {
+        String consulta = "SELECT stock_actual FROM inventario WHERE id_articulo = ?";
+        int stockActual = 0;
+
+        try (PreparedStatement psCheck = con.prepareStatement(consulta)) {
+            psCheck.setInt(1, editada.getIdArticulo());
+            try (ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next()) {
+                    stockActual = rs.getInt("stock_actual");
+                }
+            }
+        }
+
+        int nuevoStock = stockActual - original.getCantidad() + editada.getCantidad();
+        double nuevoValor = nuevoStock * editada.getPrecioUnitario();
+
+        String sqlUpdate = "UPDATE inventario SET stock_actual = ?, costo_unitario = ?, valor_inventario = ?, unidad = ?, estado = ? WHERE id_articulo = ?";
+        
+        try (PreparedStatement ps = con.prepareStatement(sqlUpdate)) {
+            ps.setInt(1, nuevoStock);
+            ps.setDouble(2, editada.getPrecioUnitario());
+            ps.setDouble(3, nuevoValor);
+            ps.setString(4, editada.getUnidad());
+            ps.setString(5, editada.getEstado()); // ✅ ahora sí actualiza el estado
+            ps.setInt(6, editada.getIdArticulo());
+            ps.executeUpdate();
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error actualizarInventarioDespuesDeEditar: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
+    
+    // -------------------------- ELIMINAR COMPRA --------------------------
+    public void actualizarInventarioDespuesDeEliminar(Compra c) {
+        try (Connection con = cn.getConnection()) {
+            // Obtener stock actual
+            String consulta = "SELECT stock_actual, costo_unitario FROM inventario WHERE id_articulo = ?";
+            int stockActual = 0;
+            double costoUnitario = 0;
+
+            try (PreparedStatement psCheck = con.prepareStatement(consulta)) {
+                psCheck.setInt(1, c.getIdArticulo());
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next()) {
+                        stockActual = rs.getInt("stock_actual");
+                        costoUnitario = rs.getDouble("costo_unitario");
+                    }
+                }
+            }
+
+            int nuevoStock = stockActual - c.getCantidad();
+            double nuevoValor = nuevoStock * costoUnitario;
+
+            String sqlUpdate = "UPDATE inventario SET stock_actual = ?, valor_inventario = ? WHERE id_articulo = ?";
+            try (PreparedStatement ps = con.prepareStatement(sqlUpdate)) {
+                ps.setInt(1, nuevoStock);
+                ps.setDouble(2, nuevoValor);
+                ps.setInt(3, c.getIdArticulo());
+                ps.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error actualizarInventarioDespuesDeEliminar: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
+    // -------------------------- REGISTRAR COMPRA --------------------------
+   public void actualizarInventarioDespuesDeCompra(Compra compra) {
+    try (Connection con = cn.getConnection()) {
+        String consulta = "SELECT stock_actual, costo_unitario FROM inventario WHERE id_articulo = ?";
+        int stockActual = 0;
+        double costoActual = 0;
+        boolean existe = false;
+
+        try (PreparedStatement psCheck = con.prepareStatement(consulta)) {
+            psCheck.setInt(1, compra.getIdArticulo());
+            try (ResultSet rs = psCheck.executeQuery()) {
+                if (rs.next()) {
+                    stockActual = rs.getInt("stock_actual");
+                    costoActual = rs.getDouble("costo_unitario");
+                    existe = true;
+                }
+            }
+        }
+
+        int nuevoStock = stockActual + compra.getCantidad();
+        double nuevoCosto = compra.getPrecioUnitario();
+        double nuevoValor = nuevoStock * nuevoCosto;
+
+        if (existe) {
+            String sqlUpdate = "UPDATE inventario SET stock_actual = ?, costo_unitario = ?, valor_inventario = ?, unidad = ?, nombre = ?, estado = ? WHERE id_articulo = ?";
+            try (PreparedStatement ps = con.prepareStatement(sqlUpdate)) {
+                ps.setInt(1, nuevoStock);
+                ps.setDouble(2, nuevoCosto);
+                ps.setDouble(3, nuevoValor);
+                ps.setString(4, compra.getUnidad());
+                ps.setString(5, compra.getArticulo());
+                ps.setString(6, compra.getEstado());
+                ps.setInt(7, compra.getIdArticulo());
+                ps.executeUpdate();
+            }
+        } else {
+            String sqlInsert = "INSERT INTO inventario (id_articulo, nombre, stock_actual, unidad, costo_unitario, valor_inventario, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = con.prepareStatement(sqlInsert)) {
+                ps.setInt(1, compra.getIdArticulo());
+                ps.setString(2, compra.getArticulo());
+                ps.setInt(3, compra.getCantidad());
+                ps.setString(4, compra.getUnidad());
+                ps.setDouble(5, nuevoCosto);
+                ps.setDouble(6, nuevoValor);
+                ps.setString(7, compra.getEstado());
+                ps.executeUpdate();
+            }
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error actualizarInventarioDespuesDeCompra: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
+   
+    public void insertarInventarioSiNoExiste(Compra c) {
+    String sql = "INSERT INTO inventario (id_articulo, stock_actual, costo_unitario, valor_inventario, estado) " +
+                 "SELECT ?, ?, ?, ?, ? FROM DUAL WHERE NOT EXISTS " +
+                 "(SELECT 1 FROM inventario WHERE id_articulo = ?)";
+
+    try (Connection con = cn.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, c.getIdArticulo());
+        ps.setInt(2, c.getCantidad());
+        ps.setDouble(3, c.getPrecioUnitario());
+        ps.setDouble(4, c.getCantidad() * c.getPrecioUnitario());
+        ps.setString(5, c.getEstado());
+        ps.setInt(6, c.getIdArticulo());
+
+        ps.executeUpdate();
+    } catch (SQLException e) {
+        System.err.println("Error insertarInventarioSiNoExiste: " + e.getMessage());
+    }
+}
+
+    
+    // -------------------------- CALCULAR TOTAL INVENTARIO --------------------------
+    public double calcularTotalInventario() {
+    double total = 0;
+    String sql = "SELECT SUM(valor_inventario) AS total " +
+                 "FROM inventario WHERE estado <> 'Cancelado'";
+
+    try (Connection con = cn.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        if (rs.next()) {
+            total = rs.getDouble("total");
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error calcularTotalInventario: " + e.getMessage());
+    }
+
+    return total;
+}
+
+}
 

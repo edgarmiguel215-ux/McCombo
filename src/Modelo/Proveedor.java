@@ -26,6 +26,13 @@ public class Proveedor {
         this.razon = razon;
     }
 
+    
+    
+    @Override
+    public String toString() {
+    return this.nombre; // igual, el campo que quieras mostrar
+}
+
     public int getId() {
         return id;
     }
@@ -80,12 +87,6 @@ public class Proveedor {
 
     public void setRazon(String razon) {
         this.razon = razon;
-    }
-
-    
-    @Override
-    public String toString() {
-        return nombre; // o el campo que contenga el nombre del proveedor
     }
 
 }

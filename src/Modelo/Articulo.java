@@ -4,53 +4,27 @@ package Modelo;
 
 public class Articulo {
 
-    private int idArticulo;
+   
     private String nombre;
     private String unidad;
-    private int precio;
-    private int id;
-
+    private double precio;
+    private int idArticulo;
+    
+    
     public Articulo() {
     }
 
-    public Articulo(int idArticulo, String nombre, String unidad) {
-        this.idArticulo = idArticulo;
+    public Articulo(String nombre, String unidad, double precio, int idArticulo) {
         this.nombre = nombre;
         this.unidad = unidad;
-    }
-    
-
-    public Articulo(int precio) {
         this.precio = precio;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-    
-    
-
-    public int getPrecio() {
-        return precio;
-    }
-
-    public void setPrecio(int precio) {
-        this.precio = precio;
-    }
-    
-    
-
-    public int getIdArticulo() {
-        return idArticulo;
-    }
-
-    public void setIdArticulo(int idArticulo) {
         this.idArticulo = idArticulo;
     }
+    
+    @Override
+    public String toString() {
+    return this.nombre; // o como se llame tu campo de nombre
+}
 
     public String getNombre() {
         return nombre;
@@ -68,12 +42,21 @@ public class Articulo {
         this.unidad = unidad;
     }
 
-    
-    
-
-    @Override
-    public String toString() {
-        return nombre;
+    public double getPrecio() {
+        return precio;
     }
+
+    public void setPrecio(double precio) {
+        this.precio = precio;
+    }
+
+    public int getIdArticulo() {
+        return idArticulo;
+    }
+
+    public void setIdArticulo(int idArticulo) {
+        this.idArticulo = idArticulo;
+    }
+
 }
 

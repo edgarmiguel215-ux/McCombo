@@ -2,7 +2,8 @@
 package Modelo;
 
 
-public class InventarioItem {
+public class Inventario {
+    
     private int idCompra;
     private String nombre;
     private String unidad;
@@ -11,10 +12,10 @@ public class InventarioItem {
     private double valorInventario;
     private String estado;
 
-    public InventarioItem() {
+    public Inventario() {
     }
 
-    public InventarioItem(int idCompra, String nombre, String unidad, int stockActual, double costoUnitario, double valorInventario, String estado) {
+    public Inventario(int idCompra, String nombre, String unidad, int stockActual, double costoUnitario, double valorInventario, String estado) {
         this.idCompra = idCompra;
         this.nombre = nombre;
         this.unidad = unidad;
@@ -47,8 +48,6 @@ public class InventarioItem {
     public void setUnidad(String unidad) {
         this.unidad = unidad;
     }
-
-   
 
     public int getStockActual() {
         return stockActual;

@@ -4,61 +4,45 @@ package Vista;
 
 public class SistemaPrincipal extends javax.swing.JFrame {
 
-    /**
-     * Creates new form SistemaPrincipal
-     */
-      private String nombreUsuario;
+    // Datos del usuario
+    private String nombreUsuario;
     private String rolUsuario;
 
     // Instancias compartidas
-    private Inventario inventarioPanel;
+    private Inventarios inventarioPanel;
     private Compras comprasPanel;
-    private Administración adminPanel;
+    private Administración adminPanel; // Clase con tilde
 
     public SistemaPrincipal() {
         initComponents();
         this.setLocationRelativeTo(null);
 
         // Crear instancias compartidas
-        inventarioPanel = new Inventario();
+        inventarioPanel = new Inventarios();
         comprasPanel = new Compras(inventarioPanel);
         adminPanel = new Administración();
+
+        // Conexión bidireccional entre ventanas
+        inventarioPanel.setComprasPanel(comprasPanel);
+        comprasPanel.setInventarioVentana(inventarioPanel);
 
         // Conectar Administración con Compras
         adminPanel.setComprasPanel(comprasPanel);
 
         aplicarPermisos();
+        System.out.println("Sistema inicializado sin login (modo directo) con comunicación Compras-Inventario");
     }
 
     public SistemaPrincipal(String nombre, String rol) {
-        initComponents();
-        this.setLocationRelativeTo(null);
-
+        this(); // Llama al constructor base
         this.nombreUsuario = nombre;
         this.rolUsuario = rol;
 
         lblNombreUsuario.setText(nombreUsuario);
         lblRolUsuario.setText(rolUsuario);
 
-        // Crear instancias compartidas
-        inventarioPanel = new Inventario();
-        comprasPanel = new Compras(inventarioPanel);
-        adminPanel = new Administración();
-
-        // Conectar Administración con Compras
-        adminPanel.setComprasPanel(comprasPanel);
-
-        aplicarPermisos();
-        
-        // ✅ CONEXIÓN BIDIRECCIONAL
-        inventarioPanel = new Inventario();
-        comprasPanel = new Compras(inventarioPanel);
-        
-        //  CONFIGURAR LA COMUNICACIÓN
-        inventarioPanel.setComprasPanel(comprasPanel); // Si tienes este método
-        // O simplemente usar la instancia compartida
-        
-        System.out.println("✓ Sistema inicializado con comunicación Compras-Inventario");
+        System.out.println("Sistema inicializado con comunicación Compras-Inventario (usuario: "
+                + nombreUsuario + ", rol: " + rolUsuario + ")");
     }
 
     private void aplicarPermisos() {
@@ -66,51 +50,34 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
         switch (rol) {
             case "supervisor":
-                btnProductos.setEnabled(true);
-                btnProveedor.setEnabled(true);
-                btnAdministracion.setEnabled(true);
-                btnClientes.setEnabled(true);
-                btnGastos.setEnabled(true);
-                btnUsuarios.setEnabled(true);
-                btnReportes.setEnabled(true);
+                habilitarTodosLosBotones(true);
                 break;
-
             case "vendedor de caja":
+                habilitarTodosLosBotones(false);
                 btnVentasAndPedidos.setEnabled(true);
-                btnProductos.setEnabled(false);
-                btnProveedor.setEnabled(false);
-                btnAdministracion.setEnabled(false);
-                btnClientes.setEnabled(false);
-                btnGastos.setEnabled(false);
-                btnUsuarios.setEnabled(false);
-                btnReportes.setEnabled(false);
                 break;
-
             case "administrador":
-                btnVentasAndPedidos.setEnabled(true);
-                btnProductos.setEnabled(true);
-                btnProveedor.setEnabled(true);
-                btnAdministracion.setEnabled(true);
-                btnClientes.setEnabled(true);
-                btnGastos.setEnabled(true);
-                btnUsuarios.setEnabled(true);
-                btnReportes.setEnabled(true);
+                habilitarTodosLosBotones(true);
                 break;
-
             default:
-                btnVentasAndPedidos.setEnabled(true);
-                btnProductos.setEnabled(true);
-                btnProveedor.setEnabled(true);
-                btnAdministracion.setEnabled(true);
-                btnClientes.setEnabled(true);
-                btnGastos.setEnabled(true);
-                btnUsuarios.setEnabled(true);
-                btnReportes.setEnabled(true);
+                habilitarTodosLosBotones(true);
                 break;
         }
     }
+
+    private void habilitarTodosLosBotones(boolean estado) {
+        btnVentasAndPedidos.setEnabled(estado);
+        btnProductos.setEnabled(estado);
+        btnProveedor.setEnabled(estado);
+        btnAdministracion.setEnabled(estado);
+        btnClientes.setEnabled(estado);
+        btnGastos.setEnabled(estado);
+        btnUsuarios.setEnabled(estado);
+        btnReportes.setEnabled(estado);
+    }
     
 
+    
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -231,9 +198,9 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(126, 126, 126)
                 .addComponent(btnVentasAndPedidos)
-                .addGap(34, 34, 34)
+                .addGap(44, 44, 44)
                 .addComponent(btnProductos)
-                .addGap(48, 48, 48)
+                .addGap(38, 38, 38)
                 .addComponent(btnClientes)
                 .addGap(48, 48, 48)
                 .addComponent(btnProveedor)
@@ -265,6 +232,11 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         btnUsuarios.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Usuarios.png"))); // NOI18N
         btnUsuarios.setText("Usuarios ");
         btnUsuarios.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnUsuarios.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUsuariosActionPerformed(evt);
+            }
+        });
 
         btnReportes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/report.png"))); // NOI18N
         btnReportes.setText("Reportes");
@@ -291,15 +263,15 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(113, 113, 113)
+                .addGap(121, 121, 121)
                 .addComponent(btnAdministracion)
                 .addGap(38, 38, 38)
                 .addComponent(btnGastos)
-                .addGap(62, 62, 62)
+                .addGap(41, 41, 41)
                 .addComponent(btnUsuarios)
-                .addGap(54, 54, 54)
+                .addGap(40, 40, 40)
                 .addComponent(btnReportes)
-                .addContainerGap(121, Short.MAX_VALUE))
+                .addContainerGap(148, Short.MAX_VALUE))
         );
 
         getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(570, 0, 220, 550));
@@ -397,7 +369,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
     private void btnProductosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProductosActionPerformed
         // TODO add your handling code here:
         inventarioPanel.setVisible(true);
-        inventarioPanel.refrescarInventario(); // <-- Esto asegura que se carguen los datos
+        inventarioPanel.listarInventario(); // <-- Esto asegura que se carguen los datos
         
 
 
@@ -424,7 +396,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
     private void btnGastosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGastosActionPerformed
         // TODO add your handling code here:
-        comprasPanel.setVisible(true); // ✅ Usa la instancia que ya tiene el inventario conectado
+        comprasPanel.setVisible(true);// ✅ Usa la instancia que ya tiene el inventario conectado
               
         
     }//GEN-LAST:event_btnGastosActionPerformed
@@ -433,6 +405,13 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
         adminPanel.setVisible(true); //usa la instancia conectada
     }//GEN-LAST:event_btnAdministracionActionPerformed
+
+    private void btnUsuariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUsuariosActionPerformed
+        // TODO add your handling code here:
+        Usuarios ventana = new Usuarios(this, true);
+        ventana.setVisible(true);
+        
+    }//GEN-LAST:event_btnUsuariosActionPerformed
 
     /**
      * @param args the command line arguments

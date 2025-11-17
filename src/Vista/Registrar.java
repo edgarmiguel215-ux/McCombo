@@ -15,12 +15,14 @@ public class Registrar extends javax.swing.JFrame {
         setLocationRelativeTo(null); // centra la ventana
     }
     
-    private void LimpiarCampos() {
+   private void LimpiarCampos() {
     txtNombre.setText("");
     txtCorreo.setText("");
-    txtPassword.setText(""); // O setPassword(new char[0]);
-    
-    }
+    txtPassword.setText("");
+    txtCodigoRegistro.setText("");
+    comboRol.setSelectedIndex(0);
+}
+
 
     private final String CODIGO_VALIDO = "MCD2025";
 
@@ -216,9 +218,18 @@ public class Registrar extends javax.swing.JFrame {
     Usuarios nuevo = new Usuarios(nombre, correo, pass, rol);
     UsuariosDao dao = new UsuariosDao();
 
+if (dao.existeUsuarioConNombreYPass(nombre, pass)) {
+    JOptionPane.showMessageDialog(null, "Ya existe un usuario con ese nombre y contraseña");
+    return;
+}
+
     if (dao.registrarUsuario(nuevo)) {
         JOptionPane.showMessageDialog(null, "Usuario registrado exitosamente");
-        LimpiarCampos();
+        
+        LimpiarCampos(); // limpia el formulario
+        this.dispose(); // cierra la ventana actual
+        // Abre la pantalla principal (ajusta el nombre si es diferente)
+        new Login().setVisible(true);
     } else {
         JOptionPane.showMessageDialog(null, "Error al registrar usuario");
     }

@@ -15,7 +15,7 @@ public class ArticuloDAO {
         conexion = new Conexion();
     }
 
-    // Insertar artículo
+   // Insertar artículo
     public boolean insertar(Articulo articulo) {
         String sql = "INSERT INTO articulo (nombre, unidad) VALUES (?, ?)";
         try (Connection con = conexion.getConnection();
@@ -23,6 +23,7 @@ public class ArticuloDAO {
 
             ps.setString(1, articulo.getNombre());
             ps.setString(2, articulo.getUnidad());
+            
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
@@ -33,27 +34,29 @@ public class ArticuloDAO {
 
     // Listar todos los artículos
     public List<Articulo> listar() {
-        List<Articulo> lista = new ArrayList<>();
-        String sql = "SELECT id_articulo, nombre, unidad FROM articulo";
+    List<Articulo> lista = new ArrayList<>();
+    String sql = "SELECT id_articulo, nombre, unidad FROM articulo";
 
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
 
-            while (rs.next()) {
-                Articulo a = new Articulo();
-                a.setIdArticulo(rs.getInt("id_articulo"));
-                a.setNombre(rs.getString("nombre"));
-                a.setUnidad(rs.getString("unidad"));
-                lista.add(a);
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error al listar artículos: " + e.getMessage());
+        while (rs.next()) {
+            Articulo art = new Articulo();
+            art.setIdArticulo(rs.getInt("id_articulo"));   // 👈 correcto
+            art.setNombre(rs.getString("nombre"));
+            art.setUnidad(rs.getString("unidad"));
+           
+            lista.add(art);
         }
 
-        return lista;
+    } catch (SQLException e) {
+        System.out.println("Error listar articulos: " + e.getMessage());
     }
+
+    return lista;
+}
+
 
     // Actualizar artículo
     public boolean actualizar(Articulo articulo) {
@@ -63,6 +66,7 @@ public class ArticuloDAO {
 
             ps.setString(1, articulo.getNombre());
             ps.setString(2, articulo.getUnidad());
+            
             ps.setInt(3, articulo.getIdArticulo());
             return ps.executeUpdate() > 0;
 
@@ -87,7 +91,7 @@ public class ArticuloDAO {
         }
     }
 
-    // Buscar artículo por nombre
+    // Buscar por nombre
     public Articulo buscarPorNombre(String nombre) {
         Articulo articulo = null;
         String sql = "SELECT id_articulo, nombre, unidad FROM articulo WHERE nombre = ?";
@@ -97,11 +101,13 @@ public class ArticuloDAO {
 
             ps.setString(1, nombre);
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
                 articulo = new Articulo();
                 articulo.setIdArticulo(rs.getInt("id_articulo"));
                 articulo.setNombre(rs.getString("nombre"));
                 articulo.setUnidad(rs.getString("unidad"));
+                
             }
 
         } catch (SQLException e) {
@@ -111,7 +117,7 @@ public class ArticuloDAO {
         return articulo;
     }
 
-    // Buscar artículo por ID
+    // Buscar por ID
     public Articulo buscarPorId(int idArticulo) {
         Articulo articulo = null;
         String sql = "SELECT id_articulo, nombre, unidad FROM articulo WHERE id_articulo = ?";
@@ -121,11 +127,13 @@ public class ArticuloDAO {
 
             ps.setInt(1, idArticulo);
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
                 articulo = new Articulo();
                 articulo.setIdArticulo(rs.getInt("id_articulo"));
                 articulo.setNombre(rs.getString("nombre"));
                 articulo.setUnidad(rs.getString("unidad"));
+                
             }
 
         } catch (SQLException e) {
@@ -135,33 +143,41 @@ public class ArticuloDAO {
         return articulo;
     }
 
+    // Verificar si existe el nombre
     public boolean existeNombre(String nombre) {
-    String sql = "SELECT COUNT(*) FROM articulo WHERE nombre = ?";
-    try (Connection con = conexion.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setString(1, nombre);
-        ResultSet rs = ps.executeQuery();
-        rs.next();
-        return rs.getInt(1) > 0;
-    } catch (SQLException e) {
+        String sql = "SELECT COUNT(*) FROM articulo WHERE nombre = ?";
+        try (Connection con = conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, nombre);
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            return rs.getInt(1) > 0;
+
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    // Verificar si tiene detalles asociados
+    public boolean tieneDetallesAsociados(int idArticulo) {
+        String sql = "SELECT COUNT(*) FROM detalle_producto WHERE id_articulo = ?";
+        try (Connection con = conexion.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idArticulo);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al verificar detalles asociados: " + e.getMessage());
+        }
+
         return false;
     }
-}
 
-    public boolean tieneDetallesAsociados(int idArticulo) {
-    String sql = "SELECT COUNT(*) FROM detalle_producto WHERE id_articulo = ?";
-    try (Connection con = conexion.getConnection();
-         PreparedStatement ps = con.prepareStatement(sql)) {
-        ps.setInt(1, idArticulo);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            return rs.getInt(1) > 0; // true si hay registros asociados
-        }
-    } catch (SQLException e) {
-        System.err.println("Error al verificar detalles asociados: " + e.getMessage());
-    }
-    return false;
-}
 
 }
 

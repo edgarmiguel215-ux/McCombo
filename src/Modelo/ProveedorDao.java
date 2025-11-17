@@ -64,7 +64,7 @@ public class ProveedorDao {
 
     // ACTUALIZAR PROVEEDOR
     public boolean actualizar(Proveedor p) {
-        String sql = "UPDATE proveedor SET numero_documento=?, Tipo=?, nombre=?, telefono=?, direccion=?, razon=? WHERE id=?";
+        String sql = "UPDATE proveedor SET numero_documento=?, tipo=?, nombre=?, telefono=?, direccion=?, razon=? WHERE id=?";
         try (Connection con = cn.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -125,5 +125,26 @@ public class ProveedorDao {
     }
     return proveedor;
 }
+
+
+
+    public List<Proveedor> listarProveedores() {
+    List<Proveedor> lista = new ArrayList<>();
+    String sql = "SELECT id, nombre FROM proveedor";
+    try (Connection con = cn.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+            Proveedor p = new Proveedor();
+            p.setId(rs.getInt("id"));
+            p.setNombre(rs.getString("nombre"));
+            lista.add(p);
+        }
+    } catch (SQLException e) {
+        System.err.println("Error listarProveedores: " + e.getMessage());
+    }
+    return lista;
+    }
 
 }

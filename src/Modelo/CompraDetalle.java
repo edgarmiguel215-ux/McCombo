@@ -7,7 +7,7 @@ public class CompraDetalle {
   
     
     private int idCompra;
-    private int idProducto;
+    private int idArticulo;
     private String articulo;
     private int cantidad;
     private double precio;
@@ -19,17 +19,17 @@ public class CompraDetalle {
     private String estado;
     private String numero;
     private String unidad;    // gramos, kilos, litros, etc.
+    private int idInventario;
     
 
 
+    
     public CompraDetalle() {
     }
-//    this.subtotal = subtotal;
-//    this.total = subtotal;
 
-    public CompraDetalle(int idCompra, int idProducto, String articulo, int cantidad, double precio, double subtotal, String proveedor, String comprobante, String metodoPago, Date fecha, String estado, String numero, String unidad) {
+    public CompraDetalle(int idCompra, int idArticulo, String articulo, int cantidad, double precio, double subtotal, String proveedor, String comprobante, String metodoPago, Date fecha, String estado, String numero, String unidad, int idInventario) {
         this.idCompra = idCompra;
-        this.idProducto = idProducto;
+        this.idArticulo = idArticulo;
         this.articulo = articulo;
         this.cantidad = cantidad;
         this.precio = precio;
@@ -41,6 +41,7 @@ public class CompraDetalle {
         this.estado = estado;
         this.numero = numero;
         this.unidad = unidad;
+        this.idInventario = idInventario;
     }
 
     public int getIdCompra() {
@@ -51,12 +52,12 @@ public class CompraDetalle {
         this.idCompra = idCompra;
     }
 
-    public int getIdProducto() {
-        return idProducto;
+    public int getIdArticulo() {
+        return idArticulo;
     }
 
-    public void setIdProducto(int idProducto) {
-        this.idProducto = idProducto;
+    public void setIdArticulo(int idArticulo) {
+        this.idArticulo = idArticulo;
     }
 
     public String getArticulo() {
@@ -147,8 +148,15 @@ public class CompraDetalle {
         this.unidad = unidad;
     }
 
-   
+    public int getIdInventario() {
+        return idInventario;
+    }
 
+    public void setIdInventario(int idInventario) {
+        this.idInventario = idInventario;
+    }
+    
+    
     
 
     

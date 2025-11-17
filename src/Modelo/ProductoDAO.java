@@ -147,24 +147,30 @@ public class ProductoDAO {
 
     // Buscar artículo por nombre
     public Articulo buscarPorNombre(String nombre) {
-        Articulo articulo = null;
-        String sql = "SELECT * FROM articulo WHERE nombre = ?";
+    Articulo articulo = null;
+    String sql = "SELECT * FROM articulo WHERE nombre = ?";
 
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, nombre);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                articulo = new Articulo(rs.getInt("id_articulo"), rs.getString("nombre"), rs.getString("tamano"));
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error al buscar artículo por nombre: " + e.getMessage());
+        ps.setString(1, nombre);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            articulo = new Articulo(
+                rs.getString("nombre"),   // nombre
+                rs.getString("unidad"),   // unidad
+                rs.getInt("precio"),      // precio
+                rs.getInt("id")           // id
+            );
         }
 
-        return articulo;
+    } catch (SQLException e) {
+        System.err.println("Error al buscar artículo por nombre: " + e.getMessage());
     }
+
+    return articulo;
+}
+
 
     // Insertar detalle de producto
     public boolean insertarDetalle(int idProducto, int idArticulo, int cantidad) {

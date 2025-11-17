@@ -4,6 +4,7 @@ package Modelo;
 
 public class Usuarios {
     
+    private int id;
     private String nombre;
     private String correo;
     private String pass;
@@ -18,6 +19,24 @@ public class Usuarios {
         this.pass = pass;
         this.rol = rol;
     }
+
+    public Usuarios(int id, String nombre, String correo, String pass, String rol) {
+        this.id = id;
+        this.nombre = nombre;
+        this.correo = correo;
+        this.pass = pass;
+        this.rol = rol;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    
+    
 
     public String getNombre() {
         return nombre;
