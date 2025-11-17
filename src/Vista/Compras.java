@@ -17,9 +17,7 @@ import javax.swing.table.DefaultTableModel;
 
 public class Compras extends javax.swing.JFrame {
 
-    /**
-     * Creates new form Compras
-     */
+   
     // Referencia al inventario para actualizarlo en tiempo real
     private Inventarios inventarioVentana;
     
