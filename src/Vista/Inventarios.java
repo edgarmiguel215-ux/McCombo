@@ -42,12 +42,18 @@ public class Inventarios extends javax.swing.JFrame {
 
     for (Modelo.Inventario i : lista) {
         modelo.addRow(new Object[]{
-            i.getIdCompra(), i.getNombre(), i.getUnidad(),
-            i.getStockActual(), i.getCostoUnitario(),
-            i.getValorInventario(), i.getEstado()
+            i.getIdArticulo(), 
+            i.getNombre(), 
+            i.getUnidad(),
+            i.getCantidadComprada(),
+            i.getStockActual(), 
+            String.format("%.2f", i.getCostoUnitario()),
+            String.format("%.2f", i.getValorInventario()),
+ 
+            i.getEstado()
         });
 
-        // 🔹 Ignorar cancelados en cálculos
+        // Ignorar cancelados en cálculos
         if (!"Cancelado".equalsIgnoreCase(i.getEstado())) {
             totalInventario += i.getValorInventario();
         }
@@ -55,33 +61,62 @@ public class Inventarios extends javax.swing.JFrame {
         if ("Recibido".equalsIgnoreCase(i.getEstado())) {
             totalRecibido += i.getValorInventario();
         }
+//        
+//        // ALERTA: stock bajo
+//    if (i.getStockActual() < 10) {
+//        JOptionPane.showMessageDialog(
+//            this,
+//            "El producto '" + i.getNombre() + "' tiene stock bajo (" + i.getStockActual() + ").",
+//            "Alerta de Inventario",
+//            JOptionPane.WARNING_MESSAGE
+//        );
+//    }
     }
-
     txtTotalInventario.setText(String.format("Stock total comprado: $ %.2f", totalInventario));
     txtStockDisponible.setText(String.format("Stock disponible físico: $ %.2f", totalRecibido));
 }
 
    
-   // 🔹 Método para configurar el renderer
+  
+    // Método para configurar el renderer
     private void configurarRenderer() {
-        TablaInventario.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
+    TablaInventario.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
 
-                java.awt.Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                String estado = (String) table.getValueAt(row, 6); // columna Estado (índice 6)
+            java.awt.Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-                if ("Cancelado".equalsIgnoreCase(estado)) {
-                    comp.setForeground(java.awt.Color.RED);
-                } else {
-                    comp.setForeground(java.awt.Color.BLACK);
-                }
-                return comp;
+            // Estado (columna 6)
+            String estado = (String) table.getValueAt(row, 6); 
+            if ("Cancelado".equalsIgnoreCase(estado)) {
+                comp.setForeground(java.awt.Color.RED);
+            } else {
+                comp.setForeground(java.awt.Color.BLACK);
             }
-        });
-    }
-    
+
+            //  Stock bajo (columna 4)
+            try {
+                int stock = Integer.parseInt(table.getValueAt(row, 4).toString());
+                if (stock < 10) {
+                    // Resaltar toda la fila con fondo amarillo
+                    comp.setBackground(java.awt.Color.YELLOW);
+                    comp.setFont(comp.getFont().deriveFont(java.awt.Font.BOLD));
+                } else {
+                    // Restaurar fondo normal si no está seleccionado
+                    if (!isSelected) {
+                        comp.setBackground(java.awt.Color.WHITE);
+                    }
+                }
+            } catch (NumberFormatException e) {
+                // Ignorar si no es número
+            }
+
+            return comp;
+        }
+    });
+}
+
     
 
 
@@ -124,7 +159,7 @@ public class Inventarios extends javax.swing.JFrame {
 
             },
             new String [] {
-                "ID Compra", "Nombre", "Unidad", "Stock Actual", "Costo Unitario", "Valor Inventario", "Estado"
+                "ID Articulo", "Nombre", "Unidad", "Cantidad Comprada", "Stock Actual", "Costo Unitario", "Valor Inventario", "Estado"
             }
         ));
         TablaInventario.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -137,8 +172,9 @@ public class Inventarios extends javax.swing.JFrame {
             TablaInventario.getColumnModel().getColumn(0).setPreferredWidth(60);
             TablaInventario.getColumnModel().getColumn(1).setPreferredWidth(60);
             TablaInventario.getColumnModel().getColumn(2).setPreferredWidth(60);
-            TablaInventario.getColumnModel().getColumn(4).setPreferredWidth(60);
-            TablaInventario.getColumnModel().getColumn(6).setPreferredWidth(60);
+            TablaInventario.getColumnModel().getColumn(3).setPreferredWidth(60);
+            TablaInventario.getColumnModel().getColumn(5).setPreferredWidth(60);
+            TablaInventario.getColumnModel().getColumn(7).setPreferredWidth(60);
         }
 
         jButton3.setText("Regresar");
@@ -204,6 +240,8 @@ public class Inventarios extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here:
+        SistemaPrincipal sis = new SistemaPrincipal();
+        sis.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_jButton3ActionPerformed
 
@@ -219,7 +257,7 @@ public class Inventarios extends javax.swing.JFrame {
     DefaultTableModel modelo = (DefaultTableModel) TablaInventario.getModel();
     modelo.setRowCount(0);
 
-    // 🔹 Preguntar al usuario qué quiere ver
+    // Preguntar al usuario qué quiere ver
     String[] opciones = {"Cancelado", "Parcial"};
     String seleccion = (String) JOptionPane.showInputDialog(
             this,
@@ -241,9 +279,14 @@ public class Inventarios extends javax.swing.JFrame {
     for (Inventario i : lista) {
         if (seleccion.equalsIgnoreCase(i.getEstado())) {
             modelo.addRow(new Object[]{
-                i.getIdCompra(), i.getNombre(), i.getUnidad(),
-                i.getStockActual(), i.getCostoUnitario(),
-                i.getValorInventario(), i.getEstado()
+                i.getIdArticulo(),
+                i.getNombre(),
+                i.getUnidad(),
+                i.getCantidadComprada(),
+                i.getStockActual(),
+                String.format("%.2f", i.getCostoUnitario()),
+                String.format("%.2f", i.getValorInventario()),
+                i.getEstado()
             });
 
             totalValor += i.getValorInventario();
@@ -251,7 +294,7 @@ public class Inventarios extends javax.swing.JFrame {
         }
     }
 
-    // 🔹 Mostrar resultados según selección
+    // Mostrar resultados según selección
     if ("Cancelado".equalsIgnoreCase(seleccion)) {
         txtTotalInventario.setText(String.format("Total $ Cancelado: %.2f", totalValor));
         txtStockDisponible.setText(""); // vacío o puedes poner "N/A"

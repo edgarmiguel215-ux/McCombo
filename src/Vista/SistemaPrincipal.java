@@ -29,8 +29,8 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         // Conectar Administración con Compras
         adminPanel.setComprasPanel(comprasPanel);
 
-        aplicarPermisos();
-        System.out.println("Sistema inicializado sin login (modo directo) con comunicación Compras-Inventario");
+        
+//        System.out.println("Sistema inicializado sin login (modo directo) con comunicación Compras-Inventario");
     }
 
     public SistemaPrincipal(String nombre, String rol) {
@@ -40,41 +40,61 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
         lblNombreUsuario.setText(nombreUsuario);
         lblRolUsuario.setText(rolUsuario);
+        
+        aplicarPermisos();
 
-        System.out.println("Sistema inicializado con comunicación Compras-Inventario (usuario: "
+        System.out.println("Sistema inicializado con comunicacion Compras-Inventario (usuario: "
                 + nombreUsuario + ", rol: " + rolUsuario + ")");
     }
 
     private void aplicarPermisos() {
-        String rol = (rolUsuario != null) ? rolUsuario.trim().toLowerCase() : "";
+    deshabilitarTodosLosBotones(); 
 
-        switch (rol) {
-            case "supervisor":
-                habilitarTodosLosBotones(true);
-                break;
-            case "vendedor de caja":
-                habilitarTodosLosBotones(false);
-                btnVentasAndPedidos.setEnabled(true);
-                break;
-            case "administrador":
-                habilitarTodosLosBotones(true);
-                break;
-            default:
-                habilitarTodosLosBotones(true);
-                break;
-        }
+    if (rolUsuario == null) return;
+
+    String rol = rolUsuario.trim().toLowerCase();
+
+    switch (rol) {
+        case "administrador":
+        case "supervisor":
+            habilitarTodosLosBotones(true);
+            break;
+        case "vendedor de caja":
+            btnVentasAndPedidos.setEnabled(true);
+            btnClientes.setEnabled(false);
+            break;
+        default:
+            // acceso restringido
+            break;
     }
+}
 
+
+    
     private void habilitarTodosLosBotones(boolean estado) {
-        btnVentasAndPedidos.setEnabled(estado);
-        btnProductos.setEnabled(estado);
-        btnProveedor.setEnabled(estado);
-        btnAdministracion.setEnabled(estado);
-        btnClientes.setEnabled(estado);
-        btnGastos.setEnabled(estado);
-        btnUsuarios.setEnabled(estado);
-        btnReportes.setEnabled(estado);
-    }
+    btnVentasAndPedidos.setEnabled(estado);
+    btnProductos.setEnabled(estado);
+    btnProveedor.setEnabled(estado);
+    btnAdministracion.setEnabled(estado);
+    btnClientes.setEnabled(estado);
+    btnGastos.setEnabled(estado);
+    btnUsuarios.setEnabled(estado);
+    btnReportes.setEnabled(estado);
+}
+
+
+    private void deshabilitarTodosLosBotones() {
+    btnVentasAndPedidos.setEnabled(false);
+    btnProductos.setEnabled(false);
+    btnProveedor.setEnabled(false);
+    btnAdministracion.setEnabled(false);
+    btnClientes.setEnabled(false);
+    btnGastos.setEnabled(false);
+    btnUsuarios.setEnabled(false);
+    btnReportes.setEnabled(false);
+}
+
+    
     
 
     
@@ -361,8 +381,16 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
     private void btnVentasAndPedidosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVentasAndPedidosActionPerformed
         // TODO add your handling code here:
-        VentasAndPedidos ventana = new VentasAndPedidos();
-        ventana.setVisible(true);
+//        VentasAndPedidos ventana = new VentasAndPedidos();
+//        ventana.setVisible(true);
+                                            
+                                                       
+    Carrito carrito = new Carrito();
+    carrito.setNombreCajero(this.nombreUsuario); 
+    CatalogoProductos catalogo = new CatalogoProductos(carrito, this);
+    catalogo.setVisible(true);
+    this.setVisible(false); // ocultar principal mientras se abre catálogo
+  
 
     }//GEN-LAST:event_btnVentasAndPedidosActionPerformed
 
@@ -370,7 +398,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
         inventarioPanel.setVisible(true);
         inventarioPanel.listarInventario(); // <-- Esto asegura que se carguen los datos
-        
+        this.dispose();
 
 
     }//GEN-LAST:event_btnProductosActionPerformed
@@ -381,6 +409,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         // Abrir ventana de proveedores y pasar Inventario
         Proveedores ventana = new Proveedores();
         ventana.setVisible(true);
+        this.dispose();
 
     }//GEN-LAST:event_btnProveedorActionPerformed
 
@@ -390,13 +419,15 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 //        ventana.setVisible(true);
         Reporte ventana = new Reporte();
         ventana.setVisible(true);
+        this.dispose();
        
 
     }//GEN-LAST:event_btnReportesActionPerformed
 
     private void btnGastosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGastosActionPerformed
         // TODO add your handling code here:
-        comprasPanel.setVisible(true);// ✅ Usa la instancia que ya tiene el inventario conectado
+        comprasPanel.setVisible(true);// Usa la instancia que ya tiene el inventario conectado
+        this.dispose();
               
         
     }//GEN-LAST:event_btnGastosActionPerformed
@@ -404,12 +435,14 @@ public class SistemaPrincipal extends javax.swing.JFrame {
     private void btnAdministracionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAdministracionActionPerformed
         // TODO add your handling code here:
         adminPanel.setVisible(true); //usa la instancia conectada
+        this.dispose();
     }//GEN-LAST:event_btnAdministracionActionPerformed
 
     private void btnUsuariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUsuariosActionPerformed
         // TODO add your handling code here:
         Usuarios ventana = new Usuarios(this, true);
         ventana.setVisible(true);
+        this.dispose();
         
     }//GEN-LAST:event_btnUsuariosActionPerformed
 

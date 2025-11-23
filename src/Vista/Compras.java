@@ -54,16 +54,16 @@ public class Compras extends javax.swing.JFrame {
     modelo.setRowCount(0);
 
     for (Compra c : lista) {
-        String unidad = c.getUnidad(); // 🔹 unidad directamente de la compra
+        String unidad = c.getUnidad(); //  unidad directamente de la compra
         if (unidad == null || unidad.trim().isEmpty()) {
             unidad = ""; // evitar mostrar null
         }
 
         modelo.addRow(new Object[]{
             c.getId(),
-            c.getArticulo(),
+            c.getNombreArticulo(),
             c.getCantidad(),
-            unidad, // 🔹 mostrar la unidad correcta
+            unidad, //  mostrar la unidad correcta
             c.getPrecioUnitario(),
             c.getTotal(),
             c.getDatosPago(),
@@ -153,38 +153,52 @@ public class Compras extends javax.swing.JFrame {
     Proveedor prov = mapaProveedores.get(indexProveedor);
 
     Compra nuevaCompra = new Compra();
+
+    // Datos del artículo
     nuevaCompra.setIdArticulo(art.getIdArticulo());
-    nuevaCompra.setArticulo(art.getNombre());
+    nuevaCompra.setArticulo(art.getNombre());         // nombre para la compra
+    nuevaCompra.setNombreArticulo(art.getNombre());   // nombre histórico para inventario
 
-    // 🔹 Guardamos la unidad tal cual la escriba el usuario
+    // Unidad y cantidad
     nuevaCompra.setUnidad(txtUnidadCompra.getText().trim());
-
     nuevaCompra.setCantidad(Integer.parseInt(txtCantidadCompra.getText().trim()));
+
+    // Precio y total
     nuevaCompra.setPrecioUnitario(Double.parseDouble(txtPrecioUnitarioCompra.getText().trim()));
     nuevaCompra.setTotal(nuevaCompra.getCantidad() * nuevaCompra.getPrecioUnitario());
+
+    // Datos de pago y comprobante
     nuevaCompra.setComprobante(comboComprobanteCompra.getSelectedItem().toString());
     nuevaCompra.setMetodoPago(comboMetodPagoCompra.getSelectedItem().toString());
     nuevaCompra.setDatosPago(txtDatosPagoCompra.getText().trim());
+
+    // Fecha y estado
     nuevaCompra.setFecha(jDateFechaCompra.getDate());
     nuevaCompra.setEstado(comboEstatusCompra.getSelectedItem().toString());
+
+    // Datos del proveedor
     nuevaCompra.setIdProveedor(prov.getId());
     nuevaCompra.setProveedor(prov.getNombre());
 
+    // Registrar compra en BD y obtener ID
     int id = dao.registrarCompra(nuevaCompra);
     nuevaCompra.setId(id);
 
     JOptionPane.showMessageDialog(this, "Compra registrada con ID: " + id);
 
+    // Refrescar tabla de compras
     listarCompras();
 
-    // Actualizar inventario
-    InventarioDAO inventarioDAO = new InventarioDAO();
-    inventarioDAO.actualizarInventarioDespuesDeCompra(nuevaCompra);
+    // Actualizar inventario correctamente
+    InventarioDAO daoInventario = new InventarioDAO();
+    daoInventario.registrarInventarioPorCompra(nuevaCompra);
 
+    // Refrescar ventana de inventario si está abierta
     if (Inventarios.instancia != null) {
         Inventarios.instancia.refrescarInventario();
     }
 
+    // Limpiar formulario
     limpiarFormulario();
 }
 
@@ -227,26 +241,30 @@ public class Compras extends javax.swing.JFrame {
         editada.setFecha(jDateFechaCompra.getDate());
 
         // Artículo y proveedor
-        editada.setArticulo(ComboArticulo.getSelectedItem().toString());
-        editada.setIdArticulo(mapaArticulos.get(ComboArticulo.getSelectedIndex()).getIdArticulo());
-        editada.setProveedor(comboProveedorCompras.getSelectedItem().toString());
-        editada.setIdProveedor(mapaProveedores.get(comboProveedorCompras.getSelectedIndex()).getId());
+        Articulo art = mapaArticulos.get(ComboArticulo.getSelectedIndex());
+        Proveedor prov = mapaProveedores.get(comboProveedorCompras.getSelectedIndex());
+
+        editada.setIdArticulo(art.getIdArticulo());
+        editada.setArticulo(art.getNombre());        // nombre para la compra
+        editada.setNombreArticulo(art.getNombre());  // nombre histórico para inventario
+        editada.setIdProveedor(prov.getId());
+        editada.setProveedor(prov.getNombre());
 
         // 3️⃣ Actualiza la compra en la BD
         if (dao.editarCompra(editada)) {
-            // 4️⃣ Actualiza inventario usando compra original y editada
-            InventarioDAO daoInventario = new InventarioDAO();
-            daoInventario.actualizarInventarioDespuesDeEditar(original, editada);
 
-            // 5️⃣ Refresca tabla y ventana de inventario
+            // 4️⃣ Ajusta inventario según cambios de cantidad y estado
+            InventarioDAO inventarioDAO = new InventarioDAO();
+            inventarioDAO.actualizarInventarioDespuesDeEditar(original, editada);
+
+            // 5️⃣ Refresca tablas
             listarCompras();
             if (inventarioVentana != null) {
-                
                 inventarioVentana.refrescarInventario();
             }
 
             JOptionPane.showMessageDialog(this, "Compra actualizada correctamente.");
-            limpiarFormulario(); // opcional
+            limpiarFormulario();
         } else {
             JOptionPane.showMessageDialog(this, "No se pudo actualizar la compra.");
         }
@@ -258,7 +276,7 @@ public class Compras extends javax.swing.JFrame {
         e.printStackTrace();
     }
 }
-    
+
     //------------ELIMINAR COMPRA-------------//
     private void eliminarCompra() {
     int fila = TablaCompras.getSelectedRow();
@@ -270,40 +288,36 @@ public class Compras extends javax.swing.JFrame {
     try {
         int idCompra = Integer.parseInt(TablaCompras.getValueAt(fila, 0).toString());
 
-        // 1️⃣ Confirmar eliminación
         int opcion = JOptionPane.showConfirmDialog(this, 
-            "¿Está seguro de eliminar la compra seleccionada?", 
-            "Confirmar eliminación", 
+            "¿Está seguro de cancelar la compra seleccionada?", 
+            "Confirmar cancelación", 
             JOptionPane.YES_NO_OPTION);
 
-        if (opcion != JOptionPane.YES_OPTION) {
-            return;
-        }
+        if (opcion != JOptionPane.YES_OPTION) return;
 
-        // 2️⃣ Obtener compra desde la BD
+        // Obtener compra completa desde BD
         Compra compra = dao.obtenerCompraDesdeBD(idCompra);
 
-        // 3️⃣ Eliminar compra de la BD
-        if (dao.eliminarCompra(idCompra)) {
-            // 4️⃣ Actualizar inventario (restar la cantidad eliminada)
+        // Soft delete: marcar la compra como "Cancelado"
+        if (dao.eliminarCompra(idCompra)) { // ahora hace UPDATE SET estado='Cancelado'
+            
+            // Ajustar inventario
             InventarioDAO inventarioDAO = new InventarioDAO();
             inventarioDAO.actualizarInventarioDespuesDeEliminar(compra);
 
-            // 5️⃣ Refrescar tablas
-            listarCompras();
+            // Refrescar tabla de compras
+            listarCompras(); // tu método que recarga la tabla
             if (inventarioVentana != null) {
                 inventarioVentana.refrescarInventario();
             }
 
-            JOptionPane.showMessageDialog(this, "Compra eliminada correctamente.");
+            JOptionPane.showMessageDialog(this, "Compra cancelada correctamente.");
         } else {
-            JOptionPane.showMessageDialog(this, "No se pudo eliminar la compra.");
+            JOptionPane.showMessageDialog(this, "No se pudo cancelar la compra.");
         }
 
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(this, "Error en los datos de la compra.");
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Error al eliminar la compra: " + e.getMessage());
+        JOptionPane.showMessageDialog(this, "Error al cancelar la compra: " + e.getMessage());
         e.printStackTrace();
     }
 }
@@ -610,66 +624,50 @@ public class Compras extends javax.swing.JFrame {
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
         // TODO add your handling code here:
+        SistemaPrincipal sis = new SistemaPrincipal();
+        sis.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void TablaComprasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TablaComprasMouseClicked
         // TODO add your handling code here:
                                              
+                                            
     int fila = TablaCompras.getSelectedRow();
-    if (fila >= 0) {
-        try {
-            if (compra == null) {
-                compra = new Compra();
-            }
-
-            // ID de la compra
-            int idCompra = Integer.parseInt(TablaCompras.getValueAt(fila, 0).toString());
-            compra.setId(idCompra);
-
-            // Campos de texto
-            txtCantidadCompra.setText(TablaCompras.getValueAt(fila, 2).toString()); // Cantidad
-            txtUnidadCompra.setText(TablaCompras.getValueAt(fila, 3).toString());   // 🔹 Unidad guardada en la compra
-            txtPrecioUnitarioCompra.setText(TablaCompras.getValueAt(fila, 4).toString()); // Precio Unitario
-            txtTotalCompra.setText(TablaCompras.getValueAt(fila, 5).toString());    // Total
-            txtDatosPagoCompra.setText(TablaCompras.getValueAt(fila, 6).toString()); // Datos Pago
-
-            // Combos
-            comboProveedorCompras.setSelectedItem(TablaCompras.getValueAt(fila, 7).toString());
-            comboComprobanteCompra.setSelectedItem(TablaCompras.getValueAt(fila, 8).toString());
-            comboMetodPagoCompra.setSelectedItem(TablaCompras.getValueAt(fila, 9).toString());
-            comboEstatusCompra.setSelectedItem(TablaCompras.getValueAt(fila, 11).toString());
-
-            // Fecha
-            Object fechaObj = TablaCompras.getValueAt(fila, 10);
-            if (fechaObj instanceof java.util.Date) {
-                jDateFechaCompra.setDate((java.util.Date) fechaObj);
-                compra.setFecha((java.util.Date) fechaObj);
-            } else {
-                java.util.Date hoy = new java.util.Date();
-                jDateFechaCompra.setDate(hoy);
-                compra.setFecha(hoy);
-            }
-
-            // Artículo
-            String nombreArticulo = TablaCompras.getValueAt(fila, 1).toString();
-            ComboArticulo.setSelectedItem(nombreArticulo);
-            for (Map.Entry<Integer, Articulo> entry : mapaArticulos.entrySet()) {
-                if (entry.getValue().getNombre().equals(nombreArticulo)) {
-                    compra.setIdArticulo(entry.getValue().getIdArticulo());
-                    compra.setArticulo(nombreArticulo);
-                    // 🔹 No sobrescribimos la unidad aquí, ya se tomó de la compra
-                    break;
-                }
-            }
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar la compra seleccionada: " + e.getMessage());
-            e.printStackTrace();
-        }
+    if (fila < 0) {
+        return; // nada seleccionado
     }
 
+    // Validar que la celda no sea null antes de usar toString()
+    Object valorId = TablaCompras.getValueAt(fila, 0);
+    if (valorId == null) {
+        JOptionPane.showMessageDialog(this, "La fila seleccionada no contiene un ID válido.");
+        return;
+    }
 
+    try {
+        int idCompra = Integer.parseInt(valorId.toString());
+        Compra compraSeleccionada = dao.obtenerCompraDesdeBD(idCompra);
+
+        // Cargar datos en el formulario
+        txtCantidadCompra.setText(String.valueOf(compraSeleccionada.getCantidad()));
+        txtUnidadCompra.setText(compraSeleccionada.getUnidad());
+        txtPrecioUnitarioCompra.setText(String.valueOf(compraSeleccionada.getPrecioUnitario()));
+        txtTotalCompra.setText(String.valueOf(compraSeleccionada.getTotal()));
+        txtDatosPagoCompra.setText(compraSeleccionada.getDatosPago());
+        jDateFechaCompra.setDate(compraSeleccionada.getFecha());
+
+        // Combos
+        ComboArticulo.setSelectedItem(compraSeleccionada.getNombreArticulo());
+        comboProveedorCompras.setSelectedItem(compraSeleccionada.getProveedor());
+        comboComprobanteCompra.setSelectedItem(compraSeleccionada.getComprobante());
+        comboMetodPagoCompra.setSelectedItem(compraSeleccionada.getMetodoPago());
+        comboEstatusCompra.setSelectedItem(compraSeleccionada.getEstado());
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error al cargar datos de la compra: " + e.getMessage());
+        e.printStackTrace();
+    }
 
     }//GEN-LAST:event_TablaComprasMouseClicked
 

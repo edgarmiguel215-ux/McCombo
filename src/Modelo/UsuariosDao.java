@@ -55,7 +55,7 @@ public class UsuariosDao {
         } catch (SQLException e) {
             System.out.println("Error al listar usuarios: " + e.toString());
         } finally {
-            // ✅ Cerrar recursos
+            // Cerrar recursos
             cerrarRecursos(rs, ps, con);
         }
         return lista;
@@ -128,6 +128,35 @@ public class UsuariosDao {
     }
     return false;
 }
+
+    
+
+    
+    public boolean existeUsuarioConNombreYCorreoExcluyendoId(String nombre, String correo, int idExcluir) {
+    String sql = "SELECT COUNT(*) FROM usuarios WHERE nombre = ? AND correo = ? AND id != ?";
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+        con = cn.getConnection(); // se obtiene nueva conexión siempre
+        ps = con.prepareStatement(sql);
+        ps.setString(1, nombre);
+        ps.setString(2, correo);
+        ps.setInt(3, idExcluir);
+        rs = ps.executeQuery();
+        return rs.next() && rs.getInt(1) > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+    } finally {
+        // Cerrar solo ResultSet y PreparedStatement
+        try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+        try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+        // No cerrar la conexión aquí
+    }
+    return false;
+}
+
 
     
 }

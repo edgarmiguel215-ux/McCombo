@@ -9,9 +9,12 @@ import Modelo.DetalleProducto;
 import Modelo.DetalleProductoDAO;
 import Modelo.Producto;
 import Modelo.ProductoDAO;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
 public class Administración extends javax.swing.JFrame {
@@ -25,7 +28,8 @@ public class Administración extends javax.swing.JFrame {
     private Producto productoActualDetalle;
     private DetalleProductoDAO detalleProductoDAO = new DetalleProductoDAO();
     private ArticuloDAO articuloDAO = new ArticuloDAO();
-   
+    private String rutaImagenSeleccionada = "";
+
 
     private Compras comprasPanel;
     public void setComprasPanel(Compras comprasPanel) {
@@ -40,33 +44,21 @@ public class Administración extends javax.swing.JFrame {
      */
     public Administración() {
        
-
-
         initComponents();
+        this.setLocationRelativeTo(null);
         modeloCategoria = (DefaultTableModel) TableCategoria.getModel();
         modeloProducto = (DefaultTableModel) TableProductos.getModel();
         jDateChooser1.setDate(new java.util.Date());
         jDateChooser1.getDateEditor().setEnabled(false);
         jDateChooser1.setEnabled(false);
+        cargarTablaCategoria();
+        cargarComboBoxCategorias();
+        cargarTablaProductos();
+        cargarComboArticulos();
 
-        
-
-    cargarTablaCategoria();
-    cargarComboBoxCategorias();
-    cargarTablaProductos();
-    cargarComboArticulos();
-    
-
-
-    txtIdProductos.setVisible(false);
+        txtIdProductos.setVisible(false);
    
 
-
-    // Eventos de botones
-//    btnGuardarProducto.addActionListener(e -> guardarProducto());
-//    btnEditarProductos.addActionListener(e -> actualizarProducto());
-//    btnEliminarProducto.addActionListener(e -> eliminarProducto());
-//    btnLimpiarFormularioProducto.addActionListener(e -> limpiarFormularioProducto());
 
     // Evento de selección de tabla
     TableProductos.getSelectionModel().addListSelectionListener(e -> {
@@ -180,7 +172,7 @@ public class Administración extends javax.swing.JFrame {
         double precio = Double.parseDouble(precioStr);
         int idCategoria = categoriaDAO.obtenerIdPorNombre(nombreCategoria);
 
-        if (productoDAO.insertar(codigo, nombre, precio, idCategoria)) {
+        if (productoDAO.insertar(codigo, nombre, precio, idCategoria, rutaImagenSeleccionada)) {
             cargarTablaProductos();
             limpiarFormularioProducto();
 
@@ -209,23 +201,39 @@ public class Administración extends javax.swing.JFrame {
     // Actualizar producto
     private void actualizarProducto() {
     try {
-        if (idProductoSeleccionado == -1) throw new IllegalStateException("Selecciona un producto.");
+        if (idProductoSeleccionado == -1) 
+            throw new IllegalStateException("Selecciona un producto.");
 
         String codigo = txtCodigoProducto.getText().trim();
         String nombre = txtNombreProducto.getText().trim();
-        double precio = Double.parseDouble(txtPrecioDeVentaProducto.getText().trim());
+        String precioStr = txtPrecioDeVentaProducto.getText().trim();
         String nombreCategoria = ComboBoxSelecCategoria.getSelectedItem().toString();
+
+        if (codigo.isEmpty() || nombre.isEmpty() || precioStr.isEmpty())
+            throw new IllegalArgumentException("Todos los campos son obligatorios.");
+
+        double precio = Double.parseDouble(precioStr);
         int idCategoria = categoriaDAO.obtenerIdPorNombre(nombreCategoria);
 
-        if (productoDAO.actualizar(idProductoSeleccionado, codigo, nombre, precio, idCategoria)) {
+        // 🚨 Verificar si no se seleccionó una nueva imagen
+        // Si no eligió una nueva, conservar la que ya tiene el producto
+        if (rutaImagenSeleccionada == null || rutaImagenSeleccionada.isEmpty()) {
+            rutaImagenSeleccionada = productoDAO.obtenerUrlImagenPorId(idProductoSeleccionado);
+        }
+
+        if (productoDAO.actualizar(idProductoSeleccionado, codigo, nombre, precio, idCategoria, rutaImagenSeleccionada)) {
             cargarTablaProductos();
             limpiarFormularioProducto();
-            JOptionPane.showMessageDialog(this, "Producto actualizado.");
+            JOptionPane.showMessageDialog(this, "Producto actualizado correctamente.");
         }
+
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Precio inválido. Solo números.");
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, "Error al actualizar: " + e.getMessage());
     }
 }
+
 
     // Eliminar producto
     private void eliminarProducto() {
@@ -239,8 +247,9 @@ public class Administración extends javax.swing.JFrame {
         // Obtener el producto seleccionado
         int id = productos.get(fila).getId();
         String nombreProducto = productos.get(fila).getNombre();
+        String rutaImagen = productos.get(fila).getUrlImagen(); // ← IMPORTANTE
 
-        // Confirmación de eliminación
+        // Confirmación
         int confirm = JOptionPane.showConfirmDialog(this, 
                 "¿Estás seguro de eliminar el producto \"" + nombreProducto + "\"?", 
                 "Confirmar eliminación", 
@@ -248,15 +257,21 @@ public class Administración extends javax.swing.JFrame {
 
         if (confirm != JOptionPane.YES_OPTION) return;
 
-        // Intentar eliminar
+        // Intentar eliminar de la BD
         boolean eliminado = productoDAO.eliminar(id);
 
         if (eliminado) {
+
+            // Si existe una imagen, eliminarla del disco
+            if (rutaImagen != null && !rutaImagen.isEmpty()) {
+                File archivo = new File(rutaImagen);
+                if (archivo.exists()) archivo.delete();
+            }
+
             cargarTablaProductos();
             limpiarFormularioProducto();
             JOptionPane.showMessageDialog(this, "Producto eliminado correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            // Si no se pudo eliminar, probablemente haya registros dependientes
             JOptionPane.showMessageDialog(this,
                     "No se puede eliminar el producto porque tiene registros asociados en otras tablas.",
                     "Error de integridad", JOptionPane.ERROR_MESSAGE);
@@ -279,6 +294,7 @@ public class Administración extends javax.swing.JFrame {
         ComboBoxSelecCategoria.setSelectedIndex(0);
     TableProductos.clearSelection();
     idProductoSeleccionado = -1;
+    txtRutaImagen.setText("");
 }
 
     
@@ -353,7 +369,7 @@ public class Administración extends javax.swing.JFrame {
 
     if (insertado) {
         cargarTablaDetalleProducto(productoActualDetalle.getId());
-        limpiarFormularioDetalleProducto();
+        
         JOptionPane.showMessageDialog(this, "Detalle agregado correctamente.");
     } else {
         JOptionPane.showMessageDialog(this, "Error al agregar detalle.");
@@ -568,7 +584,7 @@ public class Administración extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jDateChooser1 = new com.toedter.calendar.JDateChooser();
         jLabel15 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        btnRegresar = new javax.swing.JButton();
         Articulo = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -597,6 +613,8 @@ public class Administración extends javax.swing.JFrame {
         btnEliminarProducto = new javax.swing.JButton();
         btnEditarProductos = new javax.swing.JButton();
         txtIdProductos = new javax.swing.JTextField();
+        btnSeleccionarImagen = new javax.swing.JButton();
+        txtRutaImagen = new javax.swing.JTextField();
         jPanel4 = new javax.swing.JPanel();
         jLabel11 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
@@ -635,10 +653,10 @@ public class Administración extends javax.swing.JFrame {
         jLabel15.setForeground(new java.awt.Color(0, 0, 0));
         jLabel15.setText("Administración:");
 
-        jButton1.setText("Regresar");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnRegresar.setText("Regresar");
+        btnRegresar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnRegresarActionPerformed(evt);
             }
         });
 
@@ -648,7 +666,7 @@ public class Administración extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jButton1)
+                .addComponent(btnRegresar)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 157, Short.MAX_VALUE)
                 .addComponent(jLabel15)
                 .addGap(214, 214, 214)
@@ -665,7 +683,7 @@ public class Administración extends javax.swing.JFrame {
                         .addGap(27, 27, 27))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jButton1)
+                            .addComponent(btnRegresar)
                             .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(19, 19, 19))))
         );
@@ -830,6 +848,13 @@ public class Administración extends javax.swing.JFrame {
             }
         });
 
+        btnSeleccionarImagen.setText("Seleccionar Imagen");
+        btnSeleccionarImagen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSeleccionarImagenActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -859,6 +884,10 @@ public class Administración extends javax.swing.JFrame {
                         .addComponent(btnEliminarProducto)
                         .addGap(18, 18, 18)
                         .addComponent(btnEditarProductos)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnSeleccionarImagen)
+                        .addGap(18, 18, 18)
+                        .addComponent(txtRutaImagen, javax.swing.GroupLayout.PREFERRED_SIZE, 206, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -893,7 +922,9 @@ public class Administración extends javax.swing.JFrame {
                     .addComponent(btnGuardarProducto)
                     .addComponent(btnLimpiarFormularioProducto)
                     .addComponent(btnEliminarProducto)
-                    .addComponent(btnEditarProductos))
+                    .addComponent(btnEditarProductos)
+                    .addComponent(btnSeleccionarImagen)
+                    .addComponent(txtRutaImagen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(38, Short.MAX_VALUE))
         );
 
@@ -1352,15 +1383,32 @@ public class Administración extends javax.swing.JFrame {
         agregarDetalleProducto();
     }//GEN-LAST:event_btnAgregarDetalleProductoActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
         // TODO add your handling code here:
+        SistemaPrincipal sis = new SistemaPrincipal();
+        sis.setVisible(true);
         this.dispose();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void btnEliminarDetalleProductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarDetalleProductoActionPerformed
         // TODO add your handling code here:
         eliminarDetalleSeleccionado();
     }//GEN-LAST:event_btnEliminarDetalleProductoActionPerformed
+
+    private void btnSeleccionarImagenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSeleccionarImagenActionPerformed
+        // TODO add your handling code here:
+        JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    fileChooser.setAcceptAllFileFilterUsed(false);
+    fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Imágenes", "jpg", "jpeg", "png"));
+
+    int resultado = fileChooser.showOpenDialog(this);
+    if (resultado == JFileChooser.APPROVE_OPTION) {
+        File archivo = fileChooser.getSelectedFile();
+        rutaImagenSeleccionada = archivo.getAbsolutePath();
+        txtRutaImagen.setText(rutaImagenSeleccionada); // si tienes un textfield para mostrar la ruta
+    }
+    }//GEN-LAST:event_btnSeleccionarImagenActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1422,7 +1470,8 @@ public class Administración extends javax.swing.JFrame {
     private javax.swing.JButton btnLimpiarFormularioCategoria;
     private javax.swing.JButton btnLimpiarFormularioDetalleProducto;
     private javax.swing.JButton btnLimpiarFormularioProducto;
-    private javax.swing.JButton jButton1;
+    private javax.swing.JButton btnRegresar;
+    private javax.swing.JButton btnSeleccionarImagen;
     private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -1457,6 +1506,7 @@ public class Administración extends javax.swing.JFrame {
     private javax.swing.JTextField txtNombreCategoria;
     private javax.swing.JTextField txtNombreProducto;
     private javax.swing.JTextField txtPrecioDeVentaProducto;
+    private javax.swing.JTextField txtRutaImagen;
     private javax.swing.JTextField txtUnidadArticulo;
     // End of variables declaration//GEN-END:variables
 }

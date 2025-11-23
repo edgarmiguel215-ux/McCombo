@@ -9,7 +9,9 @@ public class Producto {
     private String nombre;
     private double precio;
     private String categoria;
-
+    private String urlImagen;
+    
+    
     public Producto() {
     }
 
@@ -22,9 +24,27 @@ public class Producto {
     }
     
     @Override
-public String toString() {
-    return nombre; // o getNombre()
-}
+    public String toString() {
+        return nombre; // o getNombre()
+    }
+
+    public Producto(int id, String nombre, double precio, String urlImagen) {
+        this.id = id;
+        this.nombre = nombre;
+        this.precio = precio;
+        this.urlImagen = urlImagen;
+    }
+
+    public String getUrlImagen() {
+        return urlImagen;
+    }
+
+    public void setUrlImagen(String urlImagen) {
+        this.urlImagen = urlImagen;
+    }
+
+   
+    
 
 
     public int getId() {

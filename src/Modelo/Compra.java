@@ -21,14 +21,15 @@ public class Compra {
     private Date fecha;
     private String estado;
     private String proveedor;
-    
+    private String nombreArticulo;
     
     
     
     public Compra() {
     }
 
-    public Compra(int id, int idArticulo, int idProveedor, String articulo, int cantidad, String unidad, double precioUnitario, double total, String comprobante, String metodoPago, String datosPago, Date fecha, String estado, String proveedor) {
+
+    public Compra(int id, int idArticulo, int idProveedor, String articulo, int cantidad, String unidad, double precioUnitario, double total, String comprobante, String metodoPago, String datosPago, Date fecha, String estado, String proveedor, String nombreArticulo) {
         this.id = id;
         this.idArticulo = idArticulo;
         this.idProveedor = idProveedor;
@@ -43,7 +44,38 @@ public class Compra {
         this.fecha = fecha;
         this.estado = estado;
         this.proveedor = proveedor;
+        this.nombreArticulo = nombreArticulo;
     }
+
+     @Override
+    public String toString() {
+        return "Compra{" +
+               "id=" + id +
+               ", idArticulo=" + idArticulo +
+               ", articulo='" + articulo + '\'' +
+               ", nombreArticulo='" + nombreArticulo + '\'' +
+               ", idProveedor=" + idProveedor +
+               ", proveedor='" + proveedor + '\'' +
+               ", cantidad=" + cantidad +
+               ", unidad='" + unidad + '\'' +
+               ", precioUnitario=" + precioUnitario +
+               ", total=" + total +
+               ", comprobante='" + comprobante + '\'' +
+               ", metodoPago='" + metodoPago + '\'' +
+               ", datosPago='" + datosPago + '\'' +
+               ", fecha=" + fecha +
+               ", estado='" + estado + '\'' +
+               '}';
+    }
+    
+    public String getNombreArticulo() {
+        return nombreArticulo;
+    }
+
+    public void setNombreArticulo(String nombreArticulo) {
+        this.nombreArticulo = nombreArticulo;
+    }
+
 
     public int getId() {
         return id;

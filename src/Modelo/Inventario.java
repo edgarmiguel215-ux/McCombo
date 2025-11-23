@@ -11,11 +11,17 @@ public class Inventario {
     private double costoUnitario;
     private double valorInventario;
     private String estado;
+    private String imagen;
+    private int idArticulo;
+    private int cantidadComprada;
+    private int idInventario;
 
     public Inventario() {
     }
 
-    public Inventario(int idCompra, String nombre, String unidad, int stockActual, double costoUnitario, double valorInventario, String estado) {
+   
+    
+    public Inventario(int idCompra, String nombre, String unidad, int stockActual, double costoUnitario, double valorInventario, String estado, String imagen, int idArticulo, int cantidadComprada, int idInventario) {
         this.idCompra = idCompra;
         this.nombre = nombre;
         this.unidad = unidad;
@@ -23,6 +29,10 @@ public class Inventario {
         this.costoUnitario = costoUnitario;
         this.valorInventario = valorInventario;
         this.estado = estado;
+        this.imagen = imagen;
+        this.idArticulo = idArticulo;
+        this.cantidadComprada = cantidadComprada;
+        this.idInventario = idInventario;
     }
 
     public int getIdCompra() {
@@ -80,6 +90,39 @@ public class Inventario {
     public void setEstado(String estado) {
         this.estado = estado;
     }
+
+    public String getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
+    }
+
+    public int getIdArticulo() {
+        return idArticulo;
+    }
+
+    public void setIdArticulo(int idArticulo) {
+        this.idArticulo = idArticulo;
+    }
+
+    public int getCantidadComprada() {
+        return cantidadComprada;
+    }
+
+    public void setCantidadComprada(int cantidadComprada) {
+        this.cantidadComprada = cantidadComprada;
+    }
+
+    public int getIdInventario() {
+        return idInventario;
+    }
+
+    public void setIdInventario(int idInventario) {
+        this.idInventario = idInventario;
+    }
+    
     
     
 }

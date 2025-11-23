@@ -9,10 +9,42 @@ public class DetalleProducto {
     private String nombreProducto;
     private String nombreArticulo;
     private int cantidad;
+    private int idProducto;     // id del producto
+    private int idArticulo;     // id del artículo
     
-  
+    public DetalleProducto(int idDetalle, int cantidad, int idProducto, int idArticulo) {
+        this.idDetalle = idDetalle;
+        this.cantidad = cantidad;
+        this.idProducto = idProducto;
+        this.idArticulo = idArticulo;
+    }
+
+    public DetalleProducto(int idDetalle, String codigoProducto, String nombreProducto, String nombreArticulo, int cantidad) {
+        this.idDetalle = idDetalle;
+        this.codigoProducto = codigoProducto;
+        this.nombreProducto = nombreProducto;
+        this.nombreArticulo = nombreArticulo;
+        this.cantidad = cantidad;
+    }
+
+    public int getIdProducto() {
+        return idProducto;
+    }
+
+    public void setIdProducto(int idProducto) {
+        this.idProducto = idProducto;
+    }
+
+    public int getIdArticulo() {
+        return idArticulo;
+    }
+
+    public void setIdArticulo(int idArticulo) {
+        this.idArticulo = idArticulo;
+    }
     
-   
+
+    
 
     public DetalleProducto() {
     }

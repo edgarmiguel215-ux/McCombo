@@ -98,6 +98,32 @@ public boolean insertar(int idProducto, int idArticulo, int cantidad) {
     }
 }
 
+     // Obtener detalles por id de producto
+    public List<DetalleProducto> obtenerPorProducto(int idProducto) {
+    List<DetalleProducto> lista = new ArrayList<>();
+    String sql = "SELECT * FROM detalle_producto WHERE id_producto = ?";
+
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, idProducto);
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                DetalleProducto dp = new DetalleProducto();
+                dp.setIdDetalle(rs.getInt("id"));
+                dp.setIdProducto(rs.getInt("id_producto"));
+                dp.setIdArticulo(rs.getInt("id_articulo"));
+                dp.setCantidad(rs.getInt("cantidad"));
+                lista.add(dp);
+            }
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error en obtenerPorProducto: " + e.getMessage());
+    }
+    return lista;
+}
+
     
 }
 

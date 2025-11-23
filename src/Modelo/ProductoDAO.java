@@ -14,8 +14,8 @@ public class ProductoDAO {
     private Conexion conexion = new Conexion();
 
     // Insertar producto
-    public boolean insertar(String codigo, String nombre, double precio, int idCategoria) {
-        String sql = "INSERT INTO productos(codigo, nombre, precio, id_categoria) VALUES(?, ?, ?, ?)";
+    public boolean insertar(String codigo, String nombre, double precio, int idCategoria, String urlImagen) {
+        String sql = "INSERT INTO productos(codigo, nombre, precio, id_categoria, url_imagen) VALUES(?, ?, ?, ?, ?)";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -23,6 +23,7 @@ public class ProductoDAO {
             ps.setString(2, nombre);
             ps.setDouble(3, precio);
             ps.setInt(4, idCategoria);
+            ps.setString(5, urlImagen);
             ps.executeUpdate();
             return true;
 
@@ -33,37 +34,39 @@ public class ProductoDAO {
     }
 
     // Listar productos
-    public List<Producto> listar() {
-        List<Producto> lista = new ArrayList<>();
-        String sql = "SELECT p.id, p.codigo, p.nombre, p.precio, c.id AS id_categoria, c.nombre AS nombre_categoria " +
-                     "FROM productos p " +
-                     "JOIN categorias c ON p.id_categoria = c.id";
+    // Listar productos
+public List<Producto> listar() {
+    List<Producto> lista = new ArrayList<>();
+    String sql = "SELECT p.id, p.codigo, p.nombre, p.precio, p.url_imagen, " +
+                 "c.id AS id_categoria, c.nombre AS nombre_categoria " +
+                 "FROM productos p " +
+                 "JOIN categorias c ON p.id_categoria = c.id";
 
-        try (Connection con = conexion.getConnection();
-             Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+    try (Connection con = conexion.getConnection();
+         Statement st = con.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
 
-            while (rs.next()) {
+        while (rs.next()) {
             Producto p = new Producto();
             p.setId(rs.getInt("id"));
             p.setCodigo(rs.getString("codigo"));
             p.setNombre(rs.getString("nombre"));
             p.setPrecio(rs.getDouble("precio"));
-            p.setCategoria(rs.getString("nombre_categoria")); // directamente el nombre de la categoría
+            p.setCategoria(rs.getString("nombre_categoria")); 
+            p.setUrlImagen(rs.getString("url_imagen")); // ← IMPORTANTE
             lista.add(p);
         }
 
-
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al listar productos: " + e.getMessage());
-        }
-
-        return lista;
+    } catch (SQLException e) {
+        System.err.println("Error en listar productos: " + e.getMessage());
     }
+    return lista;
+}
+
 
     // Actualizar producto
-    public boolean actualizar(int id, String codigo, String nombre, double precio, int idCategoria) {
-        String sql = "UPDATE productos SET codigo=?, nombre=?, precio=?, id_categoria=? WHERE id=?";
+    public boolean actualizar(int id, String codigo, String nombre, double precio, int idCategoria, String urlImagen) {
+        String sql = "UPDATE productos SET codigo=?, nombre=?, precio=?, id_categoria=?, url_imagen=? WHERE id=?";
         try (Connection con = conexion.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -71,12 +74,13 @@ public class ProductoDAO {
             ps.setString(2, nombre);
             ps.setDouble(3, precio);
             ps.setInt(4, idCategoria);
-            ps.setInt(5, id);
+            ps.setString(5, urlImagen);
+            ps.setInt(6, id);
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al actualizar producto: " + e.getMessage());
-            return false;
+            System.err.println("Error al actualizar producto: " + e.getMessage());
+        return false;
         }
     }
 
@@ -297,15 +301,69 @@ public boolean existeNombre(String nombre) {
     return false;
 }
 
+    // Obtener todos los productos
+    public List<Producto> obtenerTodos() {
+    List<Producto> lista = new ArrayList<>();
+    String sql = "SELECT id, nombre, precio FROM productos";
 
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
 
+        while (rs.next()) {
+            Producto p = new Producto();
+            p.setId(rs.getInt("id"));
+            p.setNombre(rs.getString("nombre"));
+            p.setPrecio(rs.getDouble("precio"));
+            lista.add(p);
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error en obtenerTodos Productos: " + e.getMessage());
+    }
+    return lista;
 }
 
 
+    // Obtener producto por nombre
+    public Producto obtenerPorNombre(String nombre) {
+    Producto p = null;
+    String sql = "SELECT * FROM productos WHERE nombre = ?";
 
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
 
+        ps.setString(1, nombre);
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                p = new Producto();
+                p.setId(rs.getInt("id"));
+                p.setNombre(rs.getString("nombre"));
+                p.setPrecio(rs.getDouble("precio"));
+            }
+        }
 
+    } catch (SQLException e) {
+        System.err.println("Error en obtenerPorNombre: " + e.getMessage());
+    }
+    return p;
+}
 
+    
+    public String obtenerUrlImagenPorId(int id) {
+    String sql = "SELECT url_imagen FROM productos WHERE id = ?";
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
 
+        ps.setInt(1, id);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) return rs.getString(1);
 
+    } catch (Exception e) {
+        System.err.println("Error obteniendo imagen: " + e.getMessage());
+    }
+    return "";
+}
 
+    
+}

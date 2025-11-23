@@ -9,7 +9,7 @@ public class Articulo {
     private String unidad;
     private double precio;
     private int idArticulo;
-    
+     private int stock;
     
     public Articulo() {
     }
@@ -26,6 +26,23 @@ public class Articulo {
     return this.nombre; // o como se llame tu campo de nombre
 }
 
+    public Articulo(String nombre, String unidad, double precio, int idArticulo, int stock) {
+        this.nombre = nombre;
+        this.unidad = unidad;
+        this.precio = precio;
+        this.idArticulo = idArticulo;
+        this.stock = stock;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
+
+    
     public String getNombre() {
         return nombre;
     }

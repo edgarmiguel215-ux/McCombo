@@ -76,11 +76,11 @@ public class Usuarios extends javax.swing.JDialog {
         return;
     }
 
-    String correo = txtCorreoUsuario.getText();
-    String pass = txtContraseñaUsuario.getText();
-    String nombre = txtNombreUsuario.getText();
+    String correo = txtCorreoUsuario.getText().trim();
+    String pass = txtContraseñaUsuario.getText().trim();
+    String nombre = txtNombreUsuario.getText().trim();
     String rol = ComboBoxRolUsuario.getSelectedItem().toString();
-    String codigo = txtCodigoRegistro.getText();
+    String codigo = txtCodigoRegistro.getText().trim();
 
     if (correo.isEmpty() || pass.isEmpty() || nombre.isEmpty() || codigo.isEmpty()) {
         JOptionPane.showMessageDialog(null, "Todos los campos son obligatorios");
@@ -91,22 +91,29 @@ public class Usuarios extends javax.swing.JDialog {
         JOptionPane.showMessageDialog(null, "Código de edición inválido");
         return;
     }
-    
-    if (dao.existeUsuarioConNombreYPass(nombre, pass)) {
-    JOptionPane.showMessageDialog(null, "Ya existe un usuario con ese nombre y contraseña");
-    return;
-}
 
+    // Validación mejorada: excluye al usuario actual
+    if (dao.existeUsuarioConNombreYCorreoExcluyendoId(nombre, correo, idUsuarioSeleccionado)) {
+        JOptionPane.showMessageDialog(null, "Ya existe otro usuario con ese nombre y correo");
+        return;
+    }
 
     Modelo.Usuarios actualizado = new Modelo.Usuarios(idUsuarioSeleccionado, nombre, correo, pass, rol);
     if (dao.actualizarUsuario(actualizado)) {
         JOptionPane.showMessageDialog(null, "Usuario actualizado. Debes iniciar sesión nuevamente.");
-        this.dispose(); // Cierra la ventana actual
-        new Login().setVisible(true); // Abre la ventana de login
+        // Cerrar todas las ventanas abiertas
+        java.awt.Window[] ventanas = java.awt.Window.getWindows();
+        for (java.awt.Window w : ventanas) {
+            w.dispose();
+        }
+
+        // Volver a la ventana de login
+        new Login().setVisible(true);
     } else {
         JOptionPane.showMessageDialog(null, "Error al actualizar usuario");
     }
 }
+
 
 
 
@@ -400,6 +407,8 @@ public class Usuarios extends javax.swing.JDialog {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
+        SistemaPrincipal sis = new SistemaPrincipal();
+        sis.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
 

@@ -179,6 +179,29 @@ public class ArticuloDAO {
     }
 
 
+    // Obtener nombre de artículo por id
+    public String obtenerNombre(int idArticulo) {
+    String nombre = "";
+    String sql = "SELECT nombre FROM articulo WHERE id_articulo = ?";
+
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, idArticulo);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                nombre = rs.getString("nombre");
+            }
+        }
+
+    } catch (SQLException e) {
+        System.err.println("Error en obtenerNombre Articulo: " + e.getMessage());
+    }
+    return nombre;
+}
+
+    
 }
 
 
