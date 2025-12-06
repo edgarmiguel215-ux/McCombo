@@ -8,14 +8,24 @@ import Modelo.CompraDAO;
 import Modelo.InventarioDAO;
 import Modelo.Proveedor;
 import Modelo.ProveedorDao;
+import Modelo.login;
+import Reportes.ExcelCompras;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 
 public class Compras extends javax.swing.JFrame {
+
+    private login usuario;
+
+    public void setUsuario(login usuario) {
+        this.usuario = usuario;
+    }
 
    
     // Referencia al inventario para actualizarlo en tiempo real
@@ -38,7 +48,8 @@ public class Compras extends javax.swing.JFrame {
         initComponents();
         this.inventarioVentana = inventario;
         this.setLocationRelativeTo(null);
-
+        initBuscadorCompras();
+        aplicarPlaceholder(txtBuscarCompra, "Buscar por Articulo o Proveedor");
         listeners();
         listarCompras();
         cargarArticulos();
@@ -227,9 +238,9 @@ public class Compras extends javax.swing.JFrame {
         int idCompra = Integer.parseInt(TablaCompras.getValueAt(fila, 0).toString());
         Compra original = dao.obtenerCompraDesdeBD(idCompra);
 
-        // 2️⃣ Crea una copia de la compra con los datos del formulario
+        // 2️⃣ Crea la compra editada con los datos del formulario
         Compra editada = new Compra();
-        editada.setId(original.getId()); // importante para UPDATE
+        editada.setId(original.getId());
         editada.setCantidad(Integer.parseInt(txtCantidadCompra.getText().trim()));
         editada.setUnidad(txtUnidadCompra.getText().trim());
         editada.setPrecioUnitario(Double.parseDouble(txtPrecioUnitarioCompra.getText().trim()));
@@ -241,30 +252,38 @@ public class Compras extends javax.swing.JFrame {
         editada.setFecha(jDateFechaCompra.getDate());
 
         // Artículo y proveedor
-        Articulo art = mapaArticulos.get(ComboArticulo.getSelectedIndex());
-        Proveedor prov = mapaProveedores.get(comboProveedorCompras.getSelectedIndex());
+        Articulo art = mapaArticulos.values().stream()
+                .filter(a -> a.getNombre().equals(ComboArticulo.getSelectedItem().toString()))
+                .findFirst().orElse(null);
+
+        Proveedor prov = mapaProveedores.values().stream()
+                .filter(p -> p.getNombre().equals(comboProveedorCompras.getSelectedItem().toString()))
+                .findFirst().orElse(null);
+
+        if (art == null || prov == null) {
+            JOptionPane.showMessageDialog(this, "Artículo o proveedor inválido.");
+            return;
+        }
 
         editada.setIdArticulo(art.getIdArticulo());
-        editada.setArticulo(art.getNombre());        // nombre para la compra
-        editada.setNombreArticulo(art.getNombre());  // nombre histórico para inventario
+        editada.setNombreArticulo(art.getNombre());
         editada.setIdProveedor(prov.getId());
         editada.setProveedor(prov.getNombre());
 
         // 3️⃣ Actualiza la compra en la BD
         if (dao.editarCompra(editada)) {
 
-            // 4️⃣ Ajusta inventario según cambios de cantidad y estado
+            // 4️⃣ Ajusta inventario
             InventarioDAO inventarioDAO = new InventarioDAO();
             inventarioDAO.actualizarInventarioDespuesDeEditar(original, editada);
 
             // 5️⃣ Refresca tablas
             listarCompras();
-            if (inventarioVentana != null) {
-                inventarioVentana.refrescarInventario();
-            }
+            if (inventarioVentana != null) inventarioVentana.refrescarInventario();
 
             JOptionPane.showMessageDialog(this, "Compra actualizada correctamente.");
             limpiarFormulario();
+            
         } else {
             JOptionPane.showMessageDialog(this, "No se pudo actualizar la compra.");
         }
@@ -323,6 +342,44 @@ public class Compras extends javax.swing.JFrame {
 }
 
 
+    public static void aplicarPlaceholder(JTextField campo, String placeholder) {
+    campo.setText(placeholder);
+    campo.setForeground(Color.GRAY);
+
+    campo.addFocusListener(new java.awt.event.FocusAdapter() {
+        @Override
+        public void focusGained(java.awt.event.FocusEvent e) {
+            if (campo.getText().equals(placeholder)) {
+                campo.setText("");
+                campo.setForeground(Color.BLACK);
+            }
+        }
+
+        @Override
+        public void focusLost(java.awt.event.FocusEvent e) {
+            if (campo.getText().isEmpty()) {
+                campo.setText(placeholder);
+                campo.setForeground(Color.GRAY);
+            }
+        }
+    });
+}
+    
+    private void initBuscadorCompras() {
+    txtBuscarCompra.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyReleased(java.awt.event.KeyEvent evt) {
+            String texto = txtBuscarCompra.getText().trim();
+            if (texto.isEmpty() || texto.equals("Buscar")) {
+                listarCompras(); // recarga todas
+            } else {
+                buscarCompras(texto); // filtra por artículo o proveedor
+            }
+        }
+    });
+}
+
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -356,14 +413,17 @@ public class Compras extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         TablaCompras = new javax.swing.JTable();
         btnComprarCompra = new javax.swing.JButton();
-        btnLimpiarFormularioCompras = new javax.swing.JButton();
         btnEliminarCompra = new javax.swing.JButton();
         btnActualizarCompra = new javax.swing.JButton();
         comboComprobanteCompra = new javax.swing.JComboBox<>();
         comboMetodPagoCompra = new javax.swing.JComboBox<>();
         btnRegresar = new javax.swing.JButton();
+        btnExcel = new javax.swing.JButton();
+        txtBuscarCompra = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setUndecorated(true);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jLabel1.setText("Articulo:");
@@ -420,28 +480,36 @@ public class Compras extends javax.swing.JFrame {
             TablaCompras.getColumnModel().getColumn(11).setPreferredWidth(60);
         }
 
+        btnComprarCompra.setBackground(new java.awt.Color(255, 255, 255));
+        btnComprarCompra.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnComprarCompra.setForeground(new java.awt.Color(0, 0, 0));
+        btnComprarCompra.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Comprar_Compra.png"))); // NOI18N
         btnComprarCompra.setText("Comprar");
+        btnComprarCompra.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnComprarCompra.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnComprarCompraActionPerformed(evt);
             }
         });
 
-        btnLimpiarFormularioCompras.setText("Limpiar");
-        btnLimpiarFormularioCompras.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLimpiarFormularioComprasActionPerformed(evt);
-            }
-        });
-
+        btnEliminarCompra.setBackground(new java.awt.Color(255, 255, 255));
+        btnEliminarCompra.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnEliminarCompra.setForeground(new java.awt.Color(0, 0, 0));
+        btnEliminarCompra.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Eliminar_compra.png"))); // NOI18N
         btnEliminarCompra.setText("Eliminar");
+        btnEliminarCompra.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnEliminarCompra.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnEliminarCompraActionPerformed(evt);
             }
         });
 
+        btnActualizarCompra.setBackground(new java.awt.Color(255, 255, 255));
+        btnActualizarCompra.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnActualizarCompra.setForeground(new java.awt.Color(0, 0, 0));
+        btnActualizarCompra.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Actualizar_Compara.png"))); // NOI18N
         btnActualizarCompra.setText("Actualizar");
+        btnActualizarCompra.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnActualizarCompra.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnActualizarCompraActionPerformed(evt);
@@ -452,12 +520,30 @@ public class Compras extends javax.swing.JFrame {
 
         comboMetodPagoCompra.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Efectivo", "Tarjeta", "Transferencia", "Cheque" }));
 
+        btnRegresar.setBackground(new java.awt.Color(255, 255, 255));
+        btnRegresar.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnRegresar.setForeground(new java.awt.Color(0, 0, 0));
+        btnRegresar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/regresar_2.png"))); // NOI18N
         btnRegresar.setText("Regresar");
         btnRegresar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRegresarActionPerformed(evt);
             }
         });
+
+        btnExcel.setBackground(new java.awt.Color(255, 255, 255));
+        btnExcel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        btnExcel.setForeground(new java.awt.Color(0, 0, 0));
+        btnExcel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/excel.png"))); // NOI18N
+        btnExcel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnExcel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExcelActionPerformed(evt);
+            }
+        });
+
+        jLabel12.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
+        jLabel12.setText("Administrador de Compra de Articulos");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -505,9 +591,9 @@ public class Compras extends javax.swing.JFrame {
                                     .addComponent(btnActualizarCompra)
                                     .addComponent(btnComprarCompra))
                                 .addGap(18, 18, 18)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(btnEliminarCompra)
-                                    .addComponent(btnLimpiarFormularioCompras)))
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(btnEliminarCompra, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(btnExcel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel4)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -527,14 +613,22 @@ public class Compras extends javax.swing.JFrame {
                                 .addGap(59, 59, 59))))
                     .addComponent(jScrollPane1)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(btnRegresar)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btnRegresar)
+                            .addComponent(txtBuscarCompra, javax.swing.GroupLayout.PREFERRED_SIZE, 271, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(311, 311, 311)
+                .addComponent(jLabel12)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(35, 35, 35)
+                .addGap(13, 13, 13)
+                .addComponent(jLabel12)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnRegresar)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -572,12 +666,14 @@ public class Compras extends javax.swing.JFrame {
                             .addComponent(btnActualizarCompra)
                             .addComponent(btnEliminarCompra))
                         .addGap(18, 18, 18)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(btnComprarCompra)
-                            .addComponent(btnLimpiarFormularioCompras))))
-                .addGap(45, 45, 45)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(btnComprarCompra, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(btnExcel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(txtBuscarCompra, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 213, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(76, Short.MAX_VALUE))
+                .addContainerGap(20, Short.MAX_VALUE))
         );
 
         getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1130, 530));
@@ -596,21 +692,6 @@ public class Compras extends javax.swing.JFrame {
 
     }//GEN-LAST:event_btnComprarCompraActionPerformed
 
-    private void btnLimpiarFormularioComprasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLimpiarFormularioComprasActionPerformed
-        // TODO add your handling code here:
-        ComboArticulo.setSelectedIndex(-1);
-        txtCantidadCompra.setText("");
-        txtUnidadCompra.setText("");
-        txtPrecioUnitarioCompra.setText("");
-        txtTotalCompra.setText("0.00");
-        comboComprobanteCompra.setSelectedIndex(-1);
-        comboMetodPagoCompra.setSelectedIndex(-1);
-        txtDatosPagoCompra.setText("");
-        jDateFechaCompra.setDate(null);
-        comboEstatusCompra.setSelectedIndex(-1);
-        comboProveedorCompras.setSelectedIndex(-1);
-    }//GEN-LAST:event_btnLimpiarFormularioComprasActionPerformed
-
     private void btnEliminarCompraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarCompraActionPerformed
         // TODO add your handling code here:
     eliminarCompra();
@@ -624,21 +705,18 @@ public class Compras extends javax.swing.JFrame {
 
     private void btnRegresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegresarActionPerformed
         // TODO add your handling code here:
-        SistemaPrincipal sis = new SistemaPrincipal();
+        SistemaPrincipal sis = new SistemaPrincipal(usuario);
         sis.setVisible(true);
         this.dispose();
+
     }//GEN-LAST:event_btnRegresarActionPerformed
 
     private void TablaComprasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_TablaComprasMouseClicked
         // TODO add your handling code here:
-                                             
-                                            
+    
     int fila = TablaCompras.getSelectedRow();
-    if (fila < 0) {
-        return; // nada seleccionado
-    }
+    if (fila < 0) return; // nada seleccionado
 
-    // Validar que la celda no sea null antes de usar toString()
     Object valorId = TablaCompras.getValueAt(fila, 0);
     if (valorId == null) {
         JOptionPane.showMessageDialog(this, "La fila seleccionada no contiene un ID válido.");
@@ -657,9 +735,21 @@ public class Compras extends javax.swing.JFrame {
         txtDatosPagoCompra.setText(compraSeleccionada.getDatosPago());
         jDateFechaCompra.setDate(compraSeleccionada.getFecha());
 
-        // Combos
-        ComboArticulo.setSelectedItem(compraSeleccionada.getNombreArticulo());
-        comboProveedorCompras.setSelectedItem(compraSeleccionada.getProveedor());
+        // Combos: buscar el índice en el mapa y seleccionarlo
+        ComboArticulo.setSelectedIndex(
+            mapaArticulos.entrySet().stream()
+                .filter(e -> e.getValue().getNombre().equals(compraSeleccionada.getNombreArticulo()))
+                .map(Map.Entry::getKey)
+                .findFirst().orElse(-1)
+        );
+
+        comboProveedorCompras.setSelectedIndex(
+            mapaProveedores.entrySet().stream()
+                .filter(e -> e.getValue().getNombre().equals(compraSeleccionada.getProveedor()))
+                .map(Map.Entry::getKey)
+                .findFirst().orElse(-1)
+        );
+
         comboComprobanteCompra.setSelectedItem(compraSeleccionada.getComprobante());
         comboMetodPagoCompra.setSelectedItem(compraSeleccionada.getMetodoPago());
         comboEstatusCompra.setSelectedItem(compraSeleccionada.getEstado());
@@ -669,7 +759,13 @@ public class Compras extends javax.swing.JFrame {
         e.printStackTrace();
     }
 
+
     }//GEN-LAST:event_TablaComprasMouseClicked
+
+    private void btnExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExcelActionPerformed
+        // TODO add your handling code here:
+        ExcelCompras.reporte();
+    }//GEN-LAST:event_btnExcelActionPerformed
 
     /**
      * @param args the command line arguments
@@ -712,7 +808,7 @@ public class Compras extends javax.swing.JFrame {
     private javax.swing.JButton btnActualizarCompra;
     private javax.swing.JButton btnComprarCompra;
     private javax.swing.JButton btnEliminarCompra;
-    private javax.swing.JButton btnLimpiarFormularioCompras;
+    private javax.swing.JButton btnExcel;
     private javax.swing.JButton btnRegresar;
     private javax.swing.JComboBox<String> comboComprobanteCompra;
     private javax.swing.JComboBox<String> comboEstatusCompra;
@@ -722,6 +818,7 @@ public class Compras extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -732,6 +829,7 @@ public class Compras extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTextField txtBuscarCompra;
     private javax.swing.JTextField txtCantidadCompra;
     private javax.swing.JTextField txtDatosPagoCompra;
     private javax.swing.JTextField txtPrecioUnitarioCompra;
@@ -752,6 +850,29 @@ public class Compras extends javax.swing.JFrame {
     comboEstatusCompra.setSelectedIndex(0);
     jDateFechaCompra.setDate(null);
     compra = null; // Reinicia la variable global
+}
+
+    private void buscarCompras(String criterio) {
+    List<Compra> lista = dao.buscarComprasPorArticuloOProveedor(criterio);
+    DefaultTableModel modelo = (DefaultTableModel) TablaCompras.getModel();
+    modelo.setRowCount(0);
+
+    for (Compra c : lista) {
+        modelo.addRow(new Object[]{
+            c.getId(),
+            c.getNombreArticulo(),
+            c.getCantidad(),
+            c.getUnidad(),
+            c.getPrecioUnitario(),
+            c.getTotal(),
+            c.getDatosPago(),
+            c.getProveedor(),
+            c.getComprobante(),
+            c.getMetodoPago(),
+            c.getFecha(),
+            c.getEstado()
+        });
+    }
 }
 
 }

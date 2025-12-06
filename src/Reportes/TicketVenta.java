@@ -3,11 +3,24 @@ package Reportes;
 
 
 import Modelo.CatalogosProductos;
-import com.itextpdf.text.BaseColor;
+import Modelo.Cliente;
+import Modelo.ClienteDao;
+import Modelo.DetalleProducto;
+import Modelo.DetalleProductoDAO;
+import Modelo.DetalleTicketDAO;
+import Modelo.InventarioDAO;
+import Modelo.ProductoDAO;
+import Modelo.TicketDAO;
+import Modelo.Venta;
+import Modelo.VentaDao;
+import Vista.Carrito;
 import java.awt.Color;
 import java.util.List;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.*;
+
+
+
 // Librerías iTextPDF 5.5.1
 
 import com.itextpdf.text.Chunk;
@@ -27,13 +40,27 @@ import java.io.FileOutputStream;
 
 public class TicketVenta extends javax.swing.JPanel {
 
+    private Carrito carrito; // referencia al carrito
+    private int idUsuario;
+    private String autorizacionTarjeta;
+    private String terminalTarjeta;
+    private boolean datosTarjetaCapturados = false;
+
+
+    public void setCarrito(Carrito carrito) {
+    this.carrito = carrito;
+}
+
     private double totalPagar = 0;
     
     private javax.swing.JTextField txtAutorizacion;
     private javax.swing.JTextField txtTerminal;
 
-    public TicketVenta() {
-    initComponents();
+    public TicketVenta(int idUsuario) {
+        initComponents();
+        this.idUsuario = idUsuario; // aquí sí se guarda el ID correcto
+        System.out.println("TicketVenta inicializado con idUsuario: " + this.idUsuario);
+    
     
     txtAutorizacion = new javax.swing.JTextField();
     txtTerminal = new javax.swing.JTextField();
@@ -55,34 +82,43 @@ public class TicketVenta extends javax.swing.JPanel {
 
     // 👉 Listener para ocultar/mostrar campos según forma de pago
     comboFormaPago.addActionListener(e -> {
-        String formaPago = comboFormaPago.getSelectedItem().toString();
+    String formaPago = comboFormaPago.getSelectedItem().toString();
 
-        if (formaPago.equalsIgnoreCase("TARJETA")) {
-            // Ocultar campos de efectivo
-            txtMontoRecibido.setVisible(false);
-            txtCambio.setVisible(false);
-            jLabel13.setVisible(false); // "MONTO RECIBIDO"
-            jLabel14.setVisible(false); // "CAMBIO"
+    if (formaPago.equalsIgnoreCase("TARJETA")) {
+        // Ocultar campos de efectivo
+        txtMontoRecibido.setVisible(false);
+        txtCambio.setVisible(false);
+        jLabel13.setVisible(false);
+        jLabel14.setVisible(false);
 
-            // Forzar valores
-            txtMontoRecibido.setText("Pago con tarjeta");
-            txtCambio.setText("0.00");
-        } else {
-            // Mostrar campos de efectivo
-            txtMontoRecibido.setVisible(true);
-            txtCambio.setVisible(true);
-            jLabel13.setVisible(true);
-            jLabel14.setVisible(true);
+        txtMontoRecibido.setText("Pago con tarjeta");
+        txtCambio.setText("0.00");
 
-            // Resetear valores
-            txtMontoRecibido.setText("0.00");
-            txtCambio.setText("0.00");
-        }
+        // 👉 Abrir formulario de tarjeta inmediatamente
+        FormularioTarjeta form = new FormularioTarjeta(
+            (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this),
+            this,
+            -1,   // idTicket aún no existe
+            -1    // idCliente aún no existe
+        );
+        form.setVisible(true);
 
-        // Refrescar el panel
-        panelTicket.revalidate();
-        panelTicket.repaint();
-    });
+    } else {
+        // Mostrar campos de efectivo
+        txtMontoRecibido.setVisible(true);
+        txtCambio.setVisible(true);
+        jLabel13.setVisible(true);
+        jLabel14.setVisible(true);
+
+        txtMontoRecibido.setText("0.00");
+        txtCambio.setText("0.00");
+    }
+
+    panelTicket.revalidate();
+    panelTicket.repaint();
+});
+
+
 }
 
 
@@ -112,6 +148,7 @@ public class TicketVenta extends javax.swing.JPanel {
         }
     }
 
+    
     public void llenarTicket(
         String cajero,
         String fecha,
@@ -164,11 +201,23 @@ public class TicketVenta extends javax.swing.JPanel {
         comboFormaPago.setBorder(null);
     }
     
+    public String generarNoTicket() {
+    String fecha = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
+    int aleatorio = (int)(Math.random() * 9000) + 1000; // 4 dígitos
+    return "TCK-" + fecha + "-" + aleatorio;
+}
 
-    private void generarTicketPDF() {
+
+
+    public String generarTicketPDF(int idTicket) {
+    String rutaPDF = "";
     try {
+        // Generar número único de ticket SOLO UNA VEZ
+        String noTicket = generarNoTicket();
+        txtNoTicket.setText(noTicket);
+
         String rutaDescargas = System.getProperty("user.home") + "/Downloads/";
-        String archivo = rutaDescargas + "Ticket_" + txtNoTicket.getText() + ".pdf";
+        String archivo = rutaDescargas + "Ticket_" + noTicket + ".pdf";
 
         // Documento con ancho de ticket térmico (~80 mm)
         Document document = new Document(new com.itextpdf.text.Rectangle(226, 600));
@@ -207,8 +256,8 @@ public class TicketVenta extends javax.swing.JPanel {
 
         document.add(new Chunk(separador));
 
-        // Datos relevantes
-        document.add(new Paragraph("TICKET NO.: " + txtNoTicket.getText(), fuentePequena));
+        // 👉 Datos relevantes
+        document.add(new Paragraph("TICKET NO.: " + noTicket, fuentePequena));
         document.add(new Paragraph("FECHA: " + txtFechaActual.getText(), fuentePequena));
         document.add(new Paragraph("CAJERO: " + txtNombreCajero.getText(), fuentePequena));
 
@@ -271,7 +320,7 @@ public class TicketVenta extends javax.swing.JPanel {
         cliente.setAlignment(Element.ALIGN_CENTER);
         document.add(cliente);
 
-        Paragraph tel = new Paragraph("Tel: 744-555-1234", fuentePequena);
+        Paragraph tel = new Paragraph("Para Información. Tel: 744-555-1234", fuentePequena);
         tel.setAlignment(Element.ALIGN_CENTER);
         document.add(tel);
 
@@ -281,26 +330,53 @@ public class TicketVenta extends javax.swing.JPanel {
 
         document.close();
 
-        javax.swing.JOptionPane.showMessageDialog(this,
+        // Limpiar carrito y campos
+        limpiarCarrito();
+        rutaPDF = archivo; // guarda la ruta del archivo generado
+        JOptionPane.showMessageDialog(this,
             "Ticket generado en PDF en Descargas:\n" + archivo);
 
     } catch (Exception e) {
-        javax.swing.JOptionPane.showMessageDialog(this,
+        JOptionPane.showMessageDialog(this,
             "Error al generar ticket: " + e.getMessage());
     }
+    return rutaPDF; // ⬅️ ahora sí devuelve la ruta para guardarla en la BD
 }
 
-    
+    private void limpiarCarrito() {
+    // Vaciar tabla de productos
+    DefaultTableModel modelo = (DefaultTableModel) TablaProductosComprados.getModel();
+    modelo.setRowCount(0);
 
+    // Resetear campos de totales
+    txtSubtotal.setText("");
+    txtIVA.setText("");
+    txtDescuento.setText("");
+    txtTotalPagar.setText("");
+    txtMontoRecibido.setText("");
+    txtCambio.setText("");
+
+    // Opcional: limpiar cliente y ticket
+    txtNombreCliente.setText("");
+    txtNoTicket.setText("");
+}
+
+
+
+    // Ajusta la clase interna:
     public class FormularioTarjeta extends JDialog {
     private JTextField txtAutorizacionForm;
     private JTextField txtTerminalForm;
     private JButton btnConfirmar;
-    private TicketVenta ticketVenta; // referencia al ticket
+    private TicketVenta ticketVenta;
+    private int idTicket;
+    private int idCliente; // ⬅️ nuevo
 
-    public FormularioTarjeta(JFrame parent, TicketVenta ticketVenta) {
+    public FormularioTarjeta(JFrame parent, TicketVenta ticketVenta, int idTicket, int idCliente) {
         super(parent, "Pago con Tarjeta", true);
-        this.ticketVenta = ticketVenta; // guardar referencia
+        this.ticketVenta = ticketVenta;
+        this.idTicket = idTicket;
+        this.idCliente = idCliente;
 
         setSize(300, 200);
         setLocationRelativeTo(parent);
@@ -319,25 +395,256 @@ public class TicketVenta extends javax.swing.JPanel {
         add(panel);
 
         btnConfirmar.addActionListener(e -> {
-            String autorizacion = txtAutorizacionForm.getText();
-            String terminal = txtTerminalForm.getText();
+            String autorizacion = txtAutorizacionForm.getText().trim();
+            String terminal = txtTerminalForm.getText().trim();
 
             if (autorizacion.isEmpty() || terminal.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Completa todos los campos.");
-            } else {
-                // Guardar en la instancia de TicketVenta
-                ticketVenta.txtAutorizacion.setText(autorizacion);
-                ticketVenta.txtTerminal.setText(terminal);
-
-                // Generar ticket PDF
-                ticketVenta.generarTicketPDF();
-
-                dispose();
+                return;
             }
+
+            // Guardar en TicketVenta y continuar flujo
+            ticketVenta.txtAutorizacion.setText(autorizacion);
+            ticketVenta.txtTerminal.setText(terminal);
+
+            // Cerrar flujo: generar PDF y actualizar rutas
+            ticketVenta.cerrarFlujoGeneracionYActualizacion(idTicket, idCliente);
+
+            dispose();
         });
     }
+}
+
+    private void cerrarFlujoGeneracionYActualizacion(int idTicket, int idCliente) {
+    try {
+        TicketDAO ticketDAO = new TicketDAO();
+        ClienteDao clienteDAO = new ClienteDao();
+
+        // ⚡ Aquí puedes volver a recorrer los productos y descontar inventario
+        DefaultTableModel modelo = (DefaultTableModel) TablaProductosComprados.getModel();
+        ProductoDAO productoDAO = new ProductoDAO();
+        DetalleProductoDAO detalleProductoDAO = new DetalleProductoDAO();
+        InventarioDAO inventarioDAO = new InventarioDAO();
+
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            int cantidad = Integer.parseInt(modelo.getValueAt(i, 0).toString());
+            String nombreProducto = modelo.getValueAt(i, 1).toString();
+            int idProducto = productoDAO.obtenerIdProductoPorNombre(nombreProducto);
+
+            List<DetalleProducto> articulos = detalleProductoDAO.obtenerArticulosPorProducto(idProducto);
+            for (DetalleProducto dp : articulos) {
+                int cantidadNecesaria = dp.getCantidad() * cantidad;
+                inventarioDAO.descontarStock(dp.getIdArticulo(), cantidadNecesaria);
+            }
+        }
+
+        String rutaPDF = generarTicketPDF(idTicket);
+        ticketDAO.actualizarRutaPDF(idTicket, rutaPDF);
+        clienteDAO.actualizarRutaPDFCliente(idCliente, rutaPDF);
+
+        limpiarCarrito();
+        if (carrito != null) carrito.limpiarCarrito();
+
+        JOptionPane.showMessageDialog(this, "Ticket registrado correctamente.");
+
+        java.awt.Window parentWindow = javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (parentWindow instanceof javax.swing.JFrame) {
+            ((javax.swing.JFrame) parentWindow).dispose();
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error al cerrar flujo: " + e.getMessage());
+    }
+}
+
+    // Método que valida los campos antes de generar el ticket
+    private boolean validarCampos() {
+    // Validar cliente
+    if (txtNombreCliente.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Debes ingresar el nombre del cliente.");
+        return false;
     }
 
+    // Validar forma de pago
+    if (comboFormaPago.getSelectedItem() == null) {
+        JOptionPane.showMessageDialog(this, "Debes seleccionar una forma de pago.");
+        return false;
+    }
+
+    // Validar productos
+    DefaultTableModel modelo = (DefaultTableModel) TablaProductosComprados.getModel();
+    if (modelo.getRowCount() == 0) {
+        JOptionPane.showMessageDialog(this, "Debes agregar al menos un producto al ticket.");
+        return false;
+    }
+
+    // Validar usuario
+    if (this.idUsuario <= 0) {
+        JOptionPane.showMessageDialog(this, "Error: el usuario no está inicializado correctamente.");
+        return false;
+    }
+
+    // Validar monto recibido si es efectivo
+    if (comboFormaPago.getSelectedItem().toString().equalsIgnoreCase("EFECTIVO")) {
+        try {
+            double montoRecibido = Double.parseDouble(txtMontoRecibido.getText());
+            double total = Double.parseDouble(txtTotalPagar.getText());
+            if (montoRecibido < total) {
+                JOptionPane.showMessageDialog(this, "El monto recibido no cubre el total a pagar.");
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Monto recibido inválido.");
+            return false;
+        }
+    }
+
+    // ⚠️ Para TARJETA: NO validar aquí autorización/terminal,
+    // porque se capturan en el formulario. Solo asegúrate de que
+    // nombre del cliente y productos estén llenos (ya validado arriba).
+
+    return true;
+}
+
+
+    private void procesarTicket() {
+    try {
+        // Validar campos antes de procesar
+        if (!validarCampos()) return;
+
+        // 1. Registrar cliente
+        ClienteDao clienteDAO = new ClienteDao();
+        Cliente cliente = new Cliente(txtNombreCliente.getText());
+        int idCliente = clienteDAO.registrarCliente(cliente);
+
+        // 2. Registrar ticket
+        TicketDAO ticketDAO = new TicketDAO();
+        int idUsuario = this.idUsuario;
+        double total = Double.parseDouble(txtTotalPagar.getText());
+        String metodoPago = comboFormaPago.getSelectedItem().toString();
+
+        int idTicket = ticketDAO.registrarTicket(idCliente, idUsuario, total, metodoPago);
+        
+        // 2b. Registrar venta en tabla ventas
+        VentaDao ventaDAO = new VentaDao();
+        Venta venta = new Venta();
+        venta.setId_cliente(idCliente);
+        venta.setVendedor(txtNombreCajero.getText());
+        venta.setTotal(total);
+        venta.setFecha(new java.sql.Timestamp(System.currentTimeMillis()).toString());
+
+        int idVenta = ventaDAO.registrarVenta(venta);
+
+        if (idVenta > 0) {
+            System.out.println("✅ Venta registrada en SQL con ID: " + idVenta);
+        } else {
+            System.out.println("❌ Error al registrar venta en SQL.");
+        }
+
+
+        // 3. Registrar detalle (siempre)
+        DetalleTicketDAO detalleDAO = new DetalleTicketDAO();
+        ProductoDAO productoDAO = new ProductoDAO();
+        DefaultTableModel modelo = (DefaultTableModel) TablaProductosComprados.getModel();
+
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            int cantidad = Integer.parseInt(modelo.getValueAt(i, 0).toString());
+            String nombreProducto = modelo.getValueAt(i, 1).toString();
+            double precioUnitario = Double.parseDouble(modelo.getValueAt(i, 2).toString());
+            double subtotal = Double.parseDouble(modelo.getValueAt(i, 3).toString());
+
+            int idProducto = productoDAO.obtenerIdProductoPorNombre(nombreProducto);
+            detalleDAO.registrarDetalle(idTicket, idProducto, cantidad, precioUnitario, subtotal);
+            
+            // ==============================
+            // NUEVO: Descontar inventario
+            // ==============================
+            DetalleProductoDAO detalleProductoDAO = new DetalleProductoDAO();
+            InventarioDAO inventarioDAO = new InventarioDAO();
+            DetalleTicketDAO detalleTicketDAO = new DetalleTicketDAO();
+
+            List<DetalleProducto> articulos = detalleProductoDAO.obtenerArticulosPorProducto(idProducto);
+
+            boolean hayStock = true;
+            for (DetalleProducto dp : articulos) {
+                int cantidadNecesaria = dp.getCantidad() * cantidad;
+                if (!inventarioDAO.verificarStock(dp.getIdArticulo(), cantidadNecesaria)) {
+                    hayStock = false;
+                    System.out.println("Stock insuficiente para artículo id=" + dp.getIdArticulo());
+                    break;
+                }
+            }
+
+            if (hayStock) {
+                // Registrar detalle del ticket
+                detalleTicketDAO.registrarDetalle(idTicket, idProducto, cantidad, precioUnitario, subtotal);
+
+                // Descontar inventario
+                for (DetalleProducto dp : articulos) {
+                    int cantidadNecesaria = dp.getCantidad() * cantidad;
+                    inventarioDAO.descontarStock(dp.getIdArticulo(), cantidadNecesaria);
+                }
+            } else {
+                System.out.println("Venta cancelada por falta de stock.");
+            }
+
+        } 
+
+       // 4. Ramificar por forma de pago
+        if (metodoPago.equalsIgnoreCase("TARJETA")) {
+            // Abrir formulario de tarjeta con el idTicket real
+            FormularioTarjeta form = new FormularioTarjeta(
+                (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this),
+                this,
+                idTicket,
+                idCliente // ⬅️ pasa también el cliente para cerrar flujo
+            );
+            form.setVisible(true);
+            return; // el resto se hace al confirmar en el formulario
+        }
+
+        // EFECTIVO: cerrar flujo aquí
+        
+        String rutaPDF = generarTicketPDF(idTicket);
+        ticketDAO.actualizarRutaPDF(idTicket, rutaPDF);
+        clienteDAO.actualizarRutaPDFCliente(idCliente, rutaPDF);
+
+        limpiarCarrito();
+        if (carrito != null) carrito.limpiarCarrito();
+
+        JOptionPane.showMessageDialog(this, "Ticket registrado correctamente.");
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error al registrar ticket: " + e.getMessage());
+    }
+}
+
+    
+    private void actualizarUIFormaPago() {
+    Object sel = comboFormaPago.getSelectedItem();
+    String formaPago = (sel == null) ? "" : sel.toString().trim();
+
+    boolean esTarjeta = formaPago.equalsIgnoreCase("TARJETA");
+
+    // Mostrar/ocultar campos relacionados con EFECTIVO
+    txtMontoRecibido.setVisible(!esTarjeta);
+    txtCambio.setVisible(!esTarjeta);
+    jLabel13.setVisible(!esTarjeta); // MONTO RECIBIDO
+    jLabel14.setVisible(!esTarjeta); // CAMBIO
+
+    if (esTarjeta) {
+        txtMontoRecibido.setText("0.00");
+        txtCambio.setText("0.00");
+    } else {
+        txtMontoRecibido.setText("0.00");
+        txtCambio.setText("0.00");
+    }
+
+    panelTicket.revalidate();
+    panelTicket.repaint();
+}
+
+    
+    
     
 
     /*
@@ -493,6 +800,11 @@ public class TicketVenta extends javax.swing.JPanel {
         });
 
         comboFormaPago.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "EFECTIVO", "TARJETA" }));
+        comboFormaPago.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                comboFormaPagoActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout panelTicketLayout = new javax.swing.GroupLayout(panelTicket);
         panelTicket.setLayout(panelTicketLayout);
@@ -503,16 +815,20 @@ public class TicketVenta extends javax.swing.JPanel {
                 .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panelTicketLayout.createSequentialGroup()
                         .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(87, 87, 87)
-                        .addComponent(btnFinalizarTicket)
-                        .addGap(20, 20, 20))
+                        .addGap(287, 287, 287))
                     .addGroup(panelTicketLayout.createSequentialGroup()
                         .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(panelTicketLayout.createSequentialGroup()
-                                .addComponent(jLabel14)
+                                .addComponent(jLabel13)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtCambio, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(txtMontoRecibido, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addGroup(panelTicketLayout.createSequentialGroup()
+                                    .addComponent(jLabel14)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(txtCambio, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(btnFinalizarTicket))
                                 .addGroup(panelTicketLayout.createSequentialGroup()
                                     .addComponent(jLabel12)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -553,23 +869,14 @@ public class TicketVenta extends javax.swing.JPanel {
                                     .addComponent(jLabel5)
                                     .addGap(12, 12, 12)
                                     .addComponent(txtNoTicket))
-                                .addComponent(txtNombreCliente, javax.swing.GroupLayout.Alignment.LEADING))
-                            .addGroup(panelTicketLayout.createSequentialGroup()
-                                .addComponent(jLabel13)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtMontoRecibido, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(txtNombreCliente, javax.swing.GroupLayout.Alignment.LEADING)))
                         .addContainerGap(110, Short.MAX_VALUE))))
         );
         panelTicketLayout.setVerticalGroup(
             panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelTicketLayout.createSequentialGroup()
-                .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(panelTicketLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel1))
-                    .addGroup(panelTicketLayout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(btnFinalizarTicket)))
+                .addContainerGap()
+                .addComponent(jLabel1)
                 .addGap(18, 18, 18)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -617,8 +924,9 @@ public class TicketVenta extends javax.swing.JPanel {
                 .addGap(23, 23, 23)
                 .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel14)
-                    .addComponent(txtCambio, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(52, 52, 52)
+                    .addComponent(txtCambio, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnFinalizarTicket))
+                .addGap(51, 51, 51)
                 .addComponent(jLabel15)
                 .addGap(11, 11, 11)
                 .addComponent(txtNombreCliente, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -634,22 +942,29 @@ public class TicketVenta extends javax.swing.JPanel {
 
     private void btnFinalizarTicketActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFinalizarTicketActionPerformed
         // TODO add your handling code here:
-        // Ruta fija a Descargas
-        String formaPago = comboFormaPago.getSelectedItem().toString();
+                                                       
+    System.out.println("ID de usuario usado: " + this.idUsuario);
 
-    if (formaPago.equalsIgnoreCase("TARJETA")) {
-        // Abrir formulario de tarjeta
-        FormularioTarjeta form = new FormularioTarjeta(
-            (JFrame) SwingUtilities.getWindowAncestor(this),
-            this
-        );
-        form.setVisible(true);
-    } else {
-        // Pago en efectivo: generar ticket directamente
-        generarTicketPDF();
+    if (!validarCampos()) {
+        return;
     }
+
+    // Si es EFECTIVO, procesar directamente
+    procesarTicket();
+
+    java.awt.Window parentWindow = javax.swing.SwingUtilities.getWindowAncestor(this);
+    if (parentWindow instanceof javax.swing.JFrame) {
+        ((javax.swing.JFrame) parentWindow).dispose();
+    }
+
         
     }//GEN-LAST:event_btnFinalizarTicketActionPerformed
+
+    private void comboFormaPagoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboFormaPagoActionPerformed
+        // TODO add your handling code here:
+    actualizarUIFormaPago();
+
+    }//GEN-LAST:event_comboFormaPagoActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

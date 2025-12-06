@@ -5,15 +5,22 @@ import Modelo.DetalleProductoDAO;
 import Modelo.InventarioDAO;
 import Modelo.Producto;
 import Modelo.ProductoDAO;
+import Modelo.login;
 import javax.swing.*;
 import java.awt.*;
+import static java.awt.SystemColor.menu;
 import java.io.File;
 import java.util.List;
 import javax.swing.table.DefaultTableModel;
 
 public class CatalogoProductos extends javax.swing.JFrame {
 
+    private login usuario;
 
+//    public void setUsuario(login usuario) {
+//    this.usuario = usuario;
+//}
+    
     private ProductoDAO productoDAO = new ProductoDAO();
     private DetalleProductoDAO detalleDAO = new DetalleProductoDAO();
     private ArticuloDAO articuloDAO = new ArticuloDAO();
@@ -32,7 +39,8 @@ public class CatalogoProductos extends javax.swing.JFrame {
     // referencia a la ventana principal
     private SistemaPrincipal ventanaPrincipal;
 
-    public CatalogoProductos(Carrito carrito, SistemaPrincipal ventanaPrincipal) {
+    public CatalogoProductos(Carrito carrito, SistemaPrincipal ventanaPrincipal, login usuario) {
+        this.usuario = usuario;
         this.carrito = carrito;
         this.ventanaPrincipal = ventanaPrincipal;
 
@@ -53,17 +61,25 @@ public class CatalogoProductos extends javax.swing.JFrame {
 
         cargarProductos(); // ← llenar catálogo
 
-        // --- Botón regresar fijo abajo ---
+        // --- boton regresar fijo abajo ---
         JButton btnRegresar = new JButton("Regresar");
         btnRegresar.setBackground(new Color(240, 240, 240));
         btnRegresar.setFocusPainted(false);
 
         btnRegresar.addActionListener(e -> {
-            ventanaPrincipal.setVisible(true); // ← muestra la misma instancia
-            this.dispose();                    // ← cierra catálogo
-        });
+        System.out.println("Usuario en boton Regresar: " + (usuario != null ? usuario.getNombre() : "null"));
+        System.out.println("Rol en boton Regresar: " + (usuario != null ? usuario.getRol() : "null"));
+        System.out.println("ID en boton Regresar: " + (usuario != null ? usuario.getId() : "null"));
 
-        // Panel izquierdo con catálogo + botón regresar
+        if (usuario != null && ventanaPrincipal != null) {
+            ventanaPrincipal.setVisible(true); //  reutiliza la ventana principal
+            this.dispose();                    //  cierra catálogo
+        } else {
+            JOptionPane.showMessageDialog(this, "Error: usuario o ventana principal no inicializados.");
+        }
+    });
+
+        // Panel izquierdo con catálogo + boton regresar
         JPanel panelIzquierdo = new JPanel(new BorderLayout());
         panelIzquierdo.add(scrollCatalogo, BorderLayout.CENTER);
         panelIzquierdo.add(btnRegresar, BorderLayout.SOUTH);
@@ -202,13 +218,13 @@ public class CatalogoProductos extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                Carrito carrito = new Carrito();
-                SistemaPrincipal menu = new SistemaPrincipal();
-                new CatalogoProductos(carrito, menu).setVisible(true);
-            }
-        });
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                Carrito carrito = new Carrito();
+//                new SistemaPrincipal(login usuario);
+//                new CatalogoProductos(carrito, menu).setVisible(true);
+//            }
+//        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

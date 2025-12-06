@@ -3,39 +3,56 @@ package Modelo;
 
 
 public class Cliente {
-    private int id;
-    private int dni;
+    private int idCliente;
     private String nombre;
-    private int telefono;
-    private String direccion;
-    private String razon;
+    private int idTicket;
+    private String rutaPDF;
+    
 
     public Cliente() {
     }
 
-    public Cliente(int id, int dni, String nombre, int telefono, String direccion, String razon) {
-        this.id = id;
-        this.dni = dni;
+    public Cliente(String nombre) {
         this.nombre = nombre;
-        this.telefono = telefono;
-        this.direccion = direccion;
-        this.razon = razon;
     }
 
-    public int getId() {
-        return id;
+    
+    public Cliente(int idCliente, String nombre) {
+        this.idCliente = idCliente;
+        this.nombre = nombre;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public Cliente(int idCliente, String nombre, int idTicket, String rutaPDF) {
+        this.idCliente = idCliente;
+        this.nombre = nombre;
+        this.idTicket = idTicket;
+        this.rutaPDF = rutaPDF;
     }
 
-    public int getDni() {
-        return dni;
+    public int getIdTicket() {
+        return idTicket;
     }
 
-    public void setDni(int dni) {
-        this.dni = dni;
+    public void setIdTicket(int idTicket) {
+        this.idTicket = idTicket;
+    }
+
+    public String getRutaPDF() {
+        return rutaPDF;
+    }
+
+    public void setRutaPDF(String rutaPDF) {
+        this.rutaPDF = rutaPDF;
+    }
+    
+    
+
+    public int getIdCliente() {
+        return idCliente;
+    }
+
+    public void setIdCliente(int idCliente) {
+        this.idCliente = idCliente;
     }
 
     public String getNombre() {
@@ -45,30 +62,7 @@ public class Cliente {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
-    public int getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(int telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getRazon() {
-        return razon;
-    }
-
-    public void setRazon(String razon) {
-        this.razon = razon;
-    }
+    
     
     
 }

@@ -4,6 +4,7 @@ package Modelo;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JOptionPane;
 
 
 public class ArticuloDAO {
@@ -77,19 +78,41 @@ public class ArticuloDAO {
     }
 
     // Eliminar artículo
-    public boolean eliminarArticulo(int idArticulo) {
-        String sql = "DELETE FROM articulo WHERE id_articulo = ?";
-        try (Connection con = conexion.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+    // ELIMINAR ARTÍCULO CON VALIDACIÓN
+public boolean eliminarArticulo(int idArticulo) {
+    // 1️⃣ Verificar si el artículo tiene compras asociadas
+    String sqlCheck = "SELECT COUNT(*) FROM compras WHERE id_articulo = ?";
+    try (Connection con = conexion.getConnection();
+         PreparedStatement psCheck = con.prepareStatement(sqlCheck)) {
 
-            ps.setInt(1, idArticulo);
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            System.err.println("Error al eliminar artículo: " + e.getMessage());
+        psCheck.setInt(1, idArticulo);
+        ResultSet rs = psCheck.executeQuery();
+        if (rs.next() && rs.getInt(1) > 0) {
+            // Tiene compras → no permitir eliminar
+            JOptionPane.showMessageDialog(null,
+                "No se puede eliminar el artículo porque tiene compras registradas.",
+                "Error", JOptionPane.WARNING_MESSAGE);
             return false;
         }
+    } catch (SQLException e) {
+        System.err.println("Error al verificar compras del artículo: " + e.getMessage());
+        return false;
     }
+
+    // 2️⃣ Si no tiene compras, eliminar normalmente
+    String sqlDelete = "DELETE FROM articulo WHERE id_articulo = ?";
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sqlDelete)) {
+
+        ps.setInt(1, idArticulo);
+        return ps.executeUpdate() > 0;
+
+    } catch (SQLException e) {
+        System.err.println("Error al eliminar artículo: " + e.getMessage());
+        return false;
+    }
+}
+
 
     // Buscar por nombre
     public Articulo buscarPorNombre(String nombre) {

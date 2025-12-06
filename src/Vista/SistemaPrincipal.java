@@ -1,52 +1,73 @@
 package Vista;
 
 
+import Modelo.login;
+import javax.swing.JOptionPane;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+
+
 
 public class SistemaPrincipal extends javax.swing.JFrame {
 
     // Datos del usuario
     private String nombreUsuario;
     private String rolUsuario;
-
+    private int idUsuario;
     // Instancias compartidas
     private Inventarios inventarioPanel;
     private Compras comprasPanel;
     private Administración adminPanel; // Clase con tilde
+    
+    
 
-    public SistemaPrincipal() {
+    private login usuario;
+    public void setUsuario(login usuario) {
+    this.usuario = usuario;
+}
+
+
+    public SistemaPrincipal(login usuario) {
+        this.usuario = usuario;
         initComponents();
+        
+        // Timer para actualizar fecha y hora cada segundo
+        
+        iniciarReloj();
+
         this.setLocationRelativeTo(null);
 
+        // Guardar datos del usuario
+        this.idUsuario = usuario.getId();
+        this.nombreUsuario = usuario.getNombre();
+        this.rolUsuario = usuario.getRol();
+
+        lblNombreUsuario.setText(nombreUsuario);
+        lblRolUsuario.setText(rolUsuario);
+
         // Crear instancias compartidas
-        inventarioPanel = new Inventarios();
+        inventarioPanel = new Inventarios(usuario); // pasa el usuario desde el inicio
         comprasPanel = new Compras(inventarioPanel);
-        adminPanel = new Administración();
+        adminPanel = new Administración(usuario); //  pasa el usuario desde el inicio
 
         // Conexión bidireccional entre ventanas
         inventarioPanel.setComprasPanel(comprasPanel);
         comprasPanel.setInventarioVentana(inventarioPanel);
-
-        // Conectar Administración con Compras
         adminPanel.setComprasPanel(comprasPanel);
 
-        
-//        System.out.println("Sistema inicializado sin login (modo directo) con comunicación Compras-Inventario");
-    }
-
-    public SistemaPrincipal(String nombre, String rol) {
-        this(); // Llama al constructor base
-        this.nombreUsuario = nombre;
-        this.rolUsuario = rol;
-
-        lblNombreUsuario.setText(nombreUsuario);
-        lblRolUsuario.setText(rolUsuario);
-        
         aplicarPermisos();
 
-        System.out.println("Sistema inicializado con comunicacion Compras-Inventario (usuario: "
-                + nombreUsuario + ", rol: " + rolUsuario + ")");
+        System.out.println("Sistema inicializado (usuario: " + nombreUsuario +
+                ", rol: " + rolUsuario + ", ID: " + idUsuario + ")");
     }
 
+    
+    public SistemaPrincipal getInstance() {
+    return this;
+}
+
+    
     private void aplicarPermisos() {
     deshabilitarTodosLosBotones(); 
 
@@ -95,9 +116,31 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 }
 
     
-    
+   
+    public void cerrarSesionForzado() {
+    // Cerrar todas las ventanas abiertas
+    for (java.awt.Window window : java.awt.Window.getWindows()) {
+        window.dispose();
+    }
 
-    
+    // Abrir login
+    Login login = new Login();
+    login.setVisible(true);
+}
+
+
+    private void iniciarReloj() {
+    javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
+        LocalDateTime ahora = LocalDateTime.now();
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy - HH:mm:ss");
+        String fechaHoraActual = ahora.format(formato).toUpperCase(); // en mayúsculas
+        txtFechaHoraPr.setText(fechaHoraActual);
+        txtFechaHoraPr.setBorder(null); // sin contorno
+        txtFechaHoraPr.setHorizontalAlignment(javax.swing.JTextField.CENTER); // centrado
+    });
+    timer.start();
+}
+
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -110,6 +153,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
         jPanel5 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        btnCerrarSesion = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         btnVentasAndPedidos = new javax.swing.JButton();
         btnProductos = new javax.swing.JButton();
@@ -128,8 +172,10 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         jLabel = new javax.swing.JLabel();
         lblNombreUsuario = new javax.swing.JLabel();
         lblRolUsuario = new javax.swing.JLabel();
+        txtFechaHoraPr = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setUndecorated(true);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         jPanel5.setBackground(new java.awt.Color(255, 0, 0));
@@ -138,27 +184,41 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         jLabel1.setForeground(new java.awt.Color(204, 204, 0));
         jLabel1.setText("Punto de Venta Mc Donald´s");
 
+        btnCerrarSesion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/user_closed.png"))); // NOI18N
+        btnCerrarSesion.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCerrarSesionActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(105, 105, 105)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 579, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(106, Short.MAX_VALUE))
+                .addContainerGap(118, Short.MAX_VALUE)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 532, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(94, 94, 94)
+                .addComponent(btnCerrarSesion)
+                .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(21, 21, 21)
+                .addContainerGap()
+                .addComponent(btnCerrarSesion)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                .addContainerGap(23, Short.MAX_VALUE)
                 .addComponent(jLabel1)
-                .addContainerGap(25, Short.MAX_VALUE))
+                .addGap(23, 23, 23))
         );
 
         getContentPane().add(jPanel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 790, 90));
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
+        btnVentasAndPedidos.setForeground(new java.awt.Color(0, 0, 0));
         btnVentasAndPedidos.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Nventa.png"))); // NOI18N
         btnVentasAndPedidos.setText("Ventas y pedidos ");
         btnVentasAndPedidos.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -168,6 +228,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             }
         });
 
+        btnProductos.setForeground(new java.awt.Color(0, 0, 0));
         btnProductos.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Inventario.png"))); // NOI18N
         btnProductos.setText("Inventario ");
         btnProductos.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -177,6 +238,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             }
         });
 
+        btnClientes.setForeground(new java.awt.Color(0, 0, 0));
         btnClientes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Clientes.png"))); // NOI18N
         btnClientes.setText("Clientes ");
         btnClientes.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -186,6 +248,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             }
         });
 
+        btnProveedor.setForeground(new java.awt.Color(0, 0, 0));
         btnProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/proveedor.png"))); // NOI18N
         btnProveedor.setText("Proveedor ");
         btnProveedor.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -231,6 +294,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
         jPanel2.setBackground(new java.awt.Color(255, 255, 255));
 
+        btnAdministracion.setForeground(new java.awt.Color(0, 0, 0));
         btnAdministracion.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/config.png"))); // NOI18N
         btnAdministracion.setText("Administración ");
         btnAdministracion.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -240,6 +304,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             }
         });
 
+        btnGastos.setForeground(new java.awt.Color(0, 0, 0));
         btnGastos.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Gastos.png"))); // NOI18N
         btnGastos.setText("Compras");
         btnGastos.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -249,6 +314,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             }
         });
 
+        btnUsuarios.setForeground(new java.awt.Color(0, 0, 0));
         btnUsuarios.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Usuarios.png"))); // NOI18N
         btnUsuarios.setText("Usuarios ");
         btnUsuarios.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -258,6 +324,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
             }
         });
 
+        btnReportes.setForeground(new java.awt.Color(0, 0, 0));
         btnReportes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/report.png"))); // NOI18N
         btnReportes.setText("Reportes");
         btnReportes.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -271,7 +338,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap(17, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(btnAdministracion, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -334,11 +401,10 @@ public class SistemaPrincipal extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE))
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addGroup(jPanel3Layout.createSequentialGroup()
                             .addComponent(jlabel)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -346,7 +412,8 @@ public class SistemaPrincipal extends javax.swing.JFrame {
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                             .addComponent(jLabel)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(lblRolUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(lblRolUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(txtFechaHoraPr, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(158, 158, 158))
         );
         jPanel3Layout.setVerticalGroup(
@@ -357,7 +424,7 @@ public class SistemaPrincipal extends javax.swing.JFrame {
                 .addComponent(jLabel3)
                 .addGap(28, 28, 28)
                 .addComponent(jLabel4)
-                .addGap(46, 46, 46)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jlabel)
                     .addComponent(lblNombreUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -365,7 +432,9 @@ public class SistemaPrincipal extends javax.swing.JFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblRolUsuario, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel))
-                .addGap(0, 33, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
+                .addComponent(txtFechaHoraPr)
+                .addGap(16, 16, 16))
         );
 
         getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 90, 370, 460));
@@ -375,6 +444,14 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 
     private void btnClientesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClientesActionPerformed
         // TODO add your handling code here:
+        // Crear instancia de la ventana Clientes pasando idUsuario y nombreUsuario
+        Clientes cli = new Clientes(usuario); // pasa el objeto login
+        cli.setVisible(true);
+        
+        cli.setLocationRelativeTo(null); // centra en pantalla
+
+        // Opcional: ocultar ventana principal mientras Clientes está abierto
+        this.setVisible(false);
 
 
     }//GEN-LAST:event_btnClientesActionPerformed
@@ -385,19 +462,39 @@ public class SistemaPrincipal extends javax.swing.JFrame {
 //        ventana.setVisible(true);
                                             
                                                        
-    Carrito carrito = new Carrito();
+    Carrito carrito = new Carrito(idUsuario);
+    carrito.setNombreCajero(nombreUsuario);
     carrito.setNombreCajero(this.nombreUsuario); 
-    CatalogoProductos catalogo = new CatalogoProductos(carrito, this);
+    CatalogoProductos catalogo = new CatalogoProductos(carrito, this, usuario); // ✅ pasa principal y usuario
     catalogo.setVisible(true);
+
+    
+
+
     this.setVisible(false); // ocultar principal mientras se abre catálogo
+    
   
 
     }//GEN-LAST:event_btnVentasAndPedidosActionPerformed
 
     private void btnProductosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProductosActionPerformed
         // TODO add your handling code here:
-        inventarioPanel.setVisible(true);
-        inventarioPanel.listarInventario(); // <-- Esto asegura que se carguen los datos
+//        inventarioPanel.setUsuario(usuario); // <<--- NUEVO
+//        
+//        inventarioPanel.listarInventario(); // <-- Esto asegura que se carguen los datos
+//        this.dispose();
+
+//        // Crear una nueva instancia de Inventarios pasando el usuario
+//        Inventarios inventarioVentana = new Inventarios(usuario); 
+//
+//        // Mostrar la ventana de inventario
+//        inventarioVentana.setVisible(true);
+//
+//        // Cerrar la ventana principal
+//        this.dispose();
+
+        Inventarios inv = new Inventarios(usuario);
+        inv.setVisible(true);
         this.dispose();
 
 
@@ -407,8 +504,8 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
 
         // Abrir ventana de proveedores y pasar Inventario
-        Proveedores ventana = new Proveedores();
-        ventana.setVisible(true);
+         Proveedores prov = new Proveedores(usuario); // ✅ pasa el objeto login
+        prov.setVisible(true);
         this.dispose();
 
     }//GEN-LAST:event_btnProveedorActionPerformed
@@ -417,8 +514,8 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
 //        Administración ventana = new Administración();
 //        ventana.setVisible(true);
-        Reporte ventana = new Reporte();
-        ventana.setVisible(true);
+        Reporte rep = new Reporte(usuario); // ✅ pasa el objeto login
+        rep.setVisible(true);
         this.dispose();
        
 
@@ -428,23 +525,41 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
         comprasPanel.setVisible(true);// Usa la instancia que ya tiene el inventario conectado
         this.dispose();
-              
+        comprasPanel.setUsuario(usuario);      
         
     }//GEN-LAST:event_btnGastosActionPerformed
 
     private void btnAdministracionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAdministracionActionPerformed
         // TODO add your handling code here:
-        adminPanel.setVisible(true); //usa la instancia conectada
+//        adminPanel.setUsuario(usuario); // ✅ pasa el usuario actual
+//        adminPanel.setVisible(true);
+//        this.dispose();
+
+        adminPanel.setVisible(true); // ✅ usa la instancia que ya tiene usuario
         this.dispose();
     }//GEN-LAST:event_btnAdministracionActionPerformed
 
     private void btnUsuariosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUsuariosActionPerformed
         // TODO add your handling code here:
-        Usuarios ventana = new Usuarios(this, true);
-        ventana.setVisible(true);
-        this.dispose();
+        Usuarios us = new Usuarios(this, true, usuario, this); 
+        this.setVisible(false);          // Oculta SistemaPrincipal
+        us.setVisible(true);  // cuando cierras Usuarios, vuelve a mostrar SistemaPrincipal
+
         
     }//GEN-LAST:event_btnUsuariosActionPerformed
+
+    private void btnCerrarSesionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCerrarSesionActionPerformed
+        // TODO add your handling code here:                                             
+   int opcion = JOptionPane.showConfirmDialog(this, 
+            "¿Seguro que deseas cerrar sesión?", 
+            "Confirmar cierre de sesión", 
+            JOptionPane.YES_NO_OPTION, 
+            JOptionPane.QUESTION_MESSAGE);
+
+    if(opcion == JOptionPane.YES_OPTION){
+        cerrarSesionForzado();
+    }
+    }//GEN-LAST:event_btnCerrarSesionActionPerformed
 
     /**
      * @param args the command line arguments
@@ -476,13 +591,14 @@ public class SistemaPrincipal extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SistemaPrincipal().setVisible(true);
+                new Login().setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAdministracion;
+    private javax.swing.JButton btnCerrarSesion;
     private javax.swing.JButton btnClientes;
     private javax.swing.JButton btnGastos;
     private javax.swing.JButton btnProductos;
@@ -502,5 +618,6 @@ public class SistemaPrincipal extends javax.swing.JFrame {
     private javax.swing.JLabel jlabel;
     private javax.swing.JLabel lblNombreUsuario;
     private javax.swing.JLabel lblRolUsuario;
+    private javax.swing.JLabel txtFechaHoraPr;
     // End of variables declaration//GEN-END:variables
 }

@@ -11,28 +11,28 @@ public class LoginDAO {
     Conexion cn = new Conexion();
     
     public login log(String correo, String pass){
-    login l = new login();
+    login l = null;
     String sql = "SELECT * FROM usuarios WHERE correo = ? AND pass = ?";
     try {
         con = cn.getConnection();
         ps = con.prepareStatement(sql);
         ps.setString(1, correo);
         ps.setString(2, pass);
-        rs= ps.executeQuery();
+        rs = ps.executeQuery();
         if (rs.next()){
+            l = new login();
             l.setId(rs.getInt("id"));
             l.setNombre(rs.getString("nombre"));
             l.setCorreo(rs.getString("correo"));
             l.setPass(rs.getString("pass"));
-            l.setRol(rs.getString("rol").trim()); // elimina espacios al inicio y al final
-            System.out.println("ROL desde DB: '" + l.getRol() + "'"); // depuración
-
-            
-            
+            l.setRol(rs.getString("rol").trim());
+            l.setEstado(rs.getString("estado")); // ✅ aquí seteas el estado
         }
     } catch (Exception e){
-        System.out.println(e.toString());
+        System.out.println("Error en login: " + e.toString());
     }
     return l;
-    }
+}
+
+
 }

@@ -18,7 +18,7 @@ public class DetalleProductoDAO {
 
     // Insertar detalle de producto
    // Inserta un artículo en un producto
-public boolean insertar(int idProducto, int idArticulo, int cantidad) {
+    public boolean insertar(int idProducto, int idArticulo, int cantidad) {
     String sql = "INSERT INTO detalle_producto (id_producto, id_articulo, cantidad) VALUES (?, ?, ?)";
     try (Connection con = new Conexion().getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
@@ -84,7 +84,7 @@ public boolean insertar(int idProducto, int idArticulo, int cantidad) {
     }
     
     public boolean actualizar(int idDetalle, int nuevaCantidad) {
-    String sql = "UPDATE detalle_producto SET cantidad = ? WHERE id_detalle = ?";
+    String sql = "UPDATE detalle_producto SET cantidad = ? WHERE id = ?";
     try (Connection con = conexion.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -125,5 +125,55 @@ public boolean insertar(int idProducto, int idArticulo, int cantidad) {
 }
 
     
+    public List<DetalleProducto> obtenerArticulosPorProducto(int idProducto) {
+    List<DetalleProducto> lista = new ArrayList<>();
+
+    String sql = "SELECT * FROM detalle_producto WHERE id_producto = ?";
+
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, idProducto);
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            DetalleProducto dp = new DetalleProducto();
+            dp.setIdDetalle(rs.getInt("id")); 
+            dp.setIdProducto(rs.getInt("id_producto"));
+            dp.setIdArticulo(rs.getInt("id_articulo"));
+            dp.setCantidad(rs.getInt("cantidad"));
+            lista.add(dp);
+        }
+
+    } catch (SQLException e) {
+        System.out.println("Error en obtenerArticulosPorProducto: " + e.getMessage());
+    }
+
+    return lista;
+}
+
+    public boolean verificarStock(int idArticulo, int cantidad) {
+    String sql = "SELECT stock_actual FROM inventario WHERE id_articulo = ?";
+
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, idArticulo);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            int stockActual = rs.getInt("stock_actual");
+            return stockActual >= cantidad; // true si hay suficiente
+        } else {
+            System.out.println("Inventario: artículo no encontrado id=" + idArticulo);
+            return false;
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
 }
 

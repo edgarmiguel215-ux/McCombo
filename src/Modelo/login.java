@@ -8,16 +8,36 @@ public class login {
     private String correo;
     private String pass;
     private String Rol;
+    private String estado;
 
     public login() {
     }
 
-    public login(int id, String nombre, String correo, String pass, String Rol) {
+//    public login(int id, String nombre, String correo, String pass, String Rol) {
+//        this.id = id;
+//        this.nombre = nombre;
+//        this.correo = correo;
+//        this.pass = pass;
+//        this.Rol = Rol;
+//    }
+
+    public login(int id, String nombre, String correo, String pass, String Rol, String estado) {
         this.id = id;
         this.nombre = nombre;
         this.correo = correo;
         this.pass = pass;
         this.Rol = Rol;
+        this.estado = estado;
+    }
+    
+    
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 
     public int getId() {

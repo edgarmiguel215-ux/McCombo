@@ -9,17 +9,36 @@ public class Usuarios {
     private String correo;
     private String pass;
     private String rol;
+    private String estado;
 
     public Usuarios() {
     }
 
+    public Usuarios(int id, String nombre, String correo, String pass, String rol, String estado) {
+        this.id = id;
+        this.nombre = nombre;
+        this.correo = correo;
+        this.pass = pass;
+        this.rol = rol;
+        this.estado = estado;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    
     public Usuarios(String nombre, String correo, String pass, String rol) {
         this.nombre = nombre;
         this.correo = correo;
         this.pass = pass;
         this.rol = rol;
     }
-
+//
     public Usuarios(int id, String nombre, String correo, String pass, String rol) {
         this.id = id;
         this.nombre = nombre;

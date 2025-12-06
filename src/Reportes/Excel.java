@@ -169,17 +169,11 @@ public class Excel {
                 numFilaDatos++;
             }
 
-            // Autoajustar columnas
             for (int i = 0; i < cabecera.length; i++) {
                 sheet.autoSizeColumn(i);
             }
-
-            // Ajustar manualmente algunas columnas si es necesario
-            sheet.setColumnWidth(2, 10000); // Columna Nombre/Razón Social más ancha
-            sheet.setColumnWidth(4, 12000); // Columna Dirección más ancha
-            sheet.setColumnWidth(5, 8000);  // Columna Razón
-
             sheet.setZoom(120);
+
 
             // Guardar archivo
             String fileName = "proveedores";

@@ -3,8 +3,11 @@ package Vista;
 
 import Modelo.Proveedor;
 import Modelo.ProveedorDao;
+import Modelo.login;
 import Reportes.Excel;
+import java.awt.Color;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 
@@ -13,11 +16,21 @@ public class Proveedores extends javax.swing.JFrame {
     /**
      * Creates new form Proveedores
      */
-    public Proveedores() {
+    
+    private login usuario;
+
+//public void setUsuario(login usuario) {
+//    this.usuario = usuario;
+//}
+
+    public Proveedores(login usuario) {
+        this.usuario = usuario;
         initComponents();
+        aplicarPlaceholder(txtBusacarProveedor, "Buscar Proveedor");
         configurarTabla();
         cargarProveedoresEnTabla();
         txtIdProveedor.setVisible(false);
+        initBuscadorProveedores();
 
     }
     
@@ -186,6 +199,64 @@ public class Proveedores extends javax.swing.JFrame {
 
     return true; // todos los campos están correctos
 }
+    
+    private void buscarProveedores(String criterio) {
+    ProveedorDao dao = new ProveedorDao();
+    DefaultTableModel modelo = (DefaultTableModel) tablaProveedores.getModel();
+    modelo.setRowCount(0);
+
+    for (Proveedor p : dao.buscar(criterio)) {
+        modelo.addRow(new Object[]{
+            p.getId(),
+            p.getNumeroDocumento(),
+            p.getTipo(),
+            p.getNombre(),
+            p.getTelefono(),
+            p.getDireccion(),
+            p.getRazon()
+        });
+    }
+}
+
+    
+    private void initBuscadorProveedores() {
+    txtBusacarProveedor.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyReleased(java.awt.event.KeyEvent evt) {
+            String texto = txtBusacarProveedor.getText().trim();
+            if (texto.isEmpty()) {
+                cargarProveedoresEnTabla(); // recarga todos
+            } else {
+                buscarProveedores(texto);   // filtra por id, nombre, teléfono, razón social, documento
+            }
+        }
+    });
+}
+    
+    public static void aplicarPlaceholder(JTextField campo, String placeholder) {
+    campo.setText(placeholder);
+    campo.setForeground(Color.GRAY);
+
+    campo.addFocusListener(new java.awt.event.FocusAdapter() {
+        @Override
+        public void focusGained(java.awt.event.FocusEvent e) {
+            if (campo.getText().equals(placeholder)) {
+                campo.setText("");
+                campo.setForeground(Color.BLACK);
+            }
+        }
+
+        @Override
+        public void focusLost(java.awt.event.FocusEvent e) {
+            if (campo.getText().isEmpty()) {
+                campo.setText(placeholder);
+                campo.setForeground(Color.GRAY);
+            }
+        }
+    });
+}
+    
+
 
 
     /**
@@ -221,13 +292,14 @@ public class Proveedores extends javax.swing.JFrame {
         jLabel8 = new javax.swing.JLabel();
         txtRazonProveedor = new javax.swing.JTextField();
         txtIdProveedor = new javax.swing.JTextField();
+        txtBusacarProveedor = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel1.setText("Ingrese información del nuevo cliente");
 
-        jLabel2.setText("Nombre/Razon Social:");
+        jLabel2.setText("Nombrel:");
 
         jLabel3.setText("Tipo de documento:");
 
@@ -262,13 +334,15 @@ public class Proveedores extends javax.swing.JFrame {
         jLabel6.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
         jLabel6.setText("Proveedores");
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Regresar_1.png"))); // NOI18N
+        jButton1.setBackground(new java.awt.Color(255, 255, 255));
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/regresar_2.png"))); // NOI18N
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton1ActionPerformed(evt);
             }
         });
 
+        btnGuardarProveedor.setBackground(new java.awt.Color(255, 255, 255));
         btnGuardarProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/GuardarTodo.png"))); // NOI18N
         btnGuardarProveedor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -276,6 +350,7 @@ public class Proveedores extends javax.swing.JFrame {
             }
         });
 
+        btnActualizarProveedor.setBackground(new java.awt.Color(255, 255, 255));
         btnActualizarProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Actualizar.jpg"))); // NOI18N
         btnActualizarProveedor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -283,6 +358,7 @@ public class Proveedores extends javax.swing.JFrame {
             }
         });
 
+        btnEliminarProveedor.setBackground(new java.awt.Color(255, 255, 255));
         btnEliminarProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/eliminar.png"))); // NOI18N
         btnEliminarProveedor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -290,6 +366,7 @@ public class Proveedores extends javax.swing.JFrame {
             }
         });
 
+        btnLimipiarFormularioProveedor.setBackground(new java.awt.Color(255, 255, 255));
         btnLimipiarFormularioProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/LimpiarDatos.png"))); // NOI18N
         btnLimipiarFormularioProveedor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -297,6 +374,7 @@ public class Proveedores extends javax.swing.JFrame {
             }
         });
 
+        btnExcelProveedor.setBackground(new java.awt.Color(255, 255, 255));
         btnExcelProveedor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/excel.png"))); // NOI18N
         btnExcelProveedor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -343,18 +421,20 @@ public class Proveedores extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 660, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(btnGuardarProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(btnActualizarProveedor)
-                                .addGap(18, 18, 18)
-                                .addComponent(btnEliminarProveedor)
-                                .addGap(18, 18, 18)
-                                .addComponent(btnLimipiarFormularioProveedor)
-                                .addGap(18, 18, 18)
-                                .addComponent(btnExcelProveedor)
-                                .addGap(293, 293, 293))))))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(btnGuardarProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(btnActualizarProveedor)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(btnEliminarProveedor)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(btnLimipiarFormularioProveedor)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(btnExcelProveedor))
+                                    .addComponent(txtBusacarProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, 389, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE))))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -368,18 +448,17 @@ public class Proveedores extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(26, 26, 26)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 327, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jLabel2))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(26, 26, 26)
-                                .addComponent(jLabel2))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtIdProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(txtNombreProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtIdProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtNombreProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtBusacarProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(comboTipoDocumento, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -394,19 +473,20 @@ public class Proveedores extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(txtTelefono, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(txtTelefono, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel8)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(txtRazonProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(btnLimipiarFormularioProveedor, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addComponent(btnGuardarProveedor, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnActualizarProveedor, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnEliminarProveedor, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnExcelProveedor, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)))
+                        .addComponent(btnExcelProveedor, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(121, Short.MAX_VALUE))
         );
 
@@ -426,9 +506,18 @@ public class Proveedores extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        SistemaPrincipal sis = new SistemaPrincipal();
-        sis.setVisible(true);
-        this.dispose();
+        System.out.println("Usuario en boton Regresar: " + (usuario != null ? usuario.getNombre() : "null"));
+        System.out.println("Rol en boton Regresar: " + (usuario != null ? usuario.getRol() : "null"));
+        System.out.println("ID en boton Regresar: " + (usuario != null ? usuario.getId() : "null"));
+
+        if (usuario != null) {
+            SistemaPrincipal sp = new SistemaPrincipal(usuario); // ✅ usa el mismo objeto login
+            sp.setVisible(true);
+            this.dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "Error: usuario no inicializado.");
+        }
+
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void btnEliminarProveedorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarProveedorActionPerformed
@@ -504,11 +593,11 @@ public class Proveedores extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new Proveedores().setVisible(true);
-            }
-        });
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                new Proveedores().setVisible(true);
+//            }
+//        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -530,6 +619,7 @@ public class Proveedores extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable tablaProveedores;
+    private javax.swing.JTextField txtBusacarProveedor;
     private javax.swing.JTextField txtDireccionProveedor;
     private javax.swing.JTextField txtIdProveedor;
     private javax.swing.JTextField txtNombreProveedor;

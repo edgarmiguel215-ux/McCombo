@@ -85,21 +85,42 @@ public class ProveedorDao {
     }
 
     // ELIMINAR PROVEEDOR
+    // ELIMINAR PROVEEDOR CON VALIDACIÓN
     public boolean eliminar(int id) {
-        String sql = "DELETE FROM proveedor WHERE id = ?";
-        try (Connection con = cn.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+    // 1️⃣ Verificar si el proveedor tiene compras asociadas
+    String sqlCheck = "SELECT COUNT(*) FROM compras WHERE idProveedor = ?";
+    try (Connection con = cn.getConnection();
+         PreparedStatement psCheck = con.prepareStatement(sqlCheck)) {
 
-            ps.setInt(1, id);
-            ps.executeUpdate();
-            return true;
-
-        } catch (SQLException e) {
-            System.err.println("Error al eliminar proveedor: " + e.getMessage());
-            JOptionPane.showMessageDialog(null, "No se pudo eliminar el proveedor:\n" + e.getMessage());
+        psCheck.setInt(1, id);
+        ResultSet rs = psCheck.executeQuery();
+        if (rs.next() && rs.getInt(1) > 0) {
+            // Tiene compras → no permitir eliminar
+            JOptionPane.showMessageDialog(null,
+                "No se puede eliminar el proveedor porque tiene compras registradas.",
+                "Error", JOptionPane.WARNING_MESSAGE);
             return false;
         }
+    } catch (SQLException e) {
+        System.err.println("Error al verificar compras del proveedor: " + e.getMessage());
+        return false;
     }
+
+    // 2️⃣ Si no tiene compras, eliminar normalmente
+    String sqlDelete = "DELETE FROM proveedor WHERE id = ?";
+    try (Connection con = cn.getConnection();
+         PreparedStatement ps = con.prepareStatement(sqlDelete)) {
+
+        ps.setInt(1, id);
+        return ps.executeUpdate() > 0;
+
+    } catch (SQLException e) {
+        System.err.println("Error al eliminar proveedor: " + e.getMessage());
+        JOptionPane.showMessageDialog(null, "No se pudo eliminar el proveedor:\n" + e.getMessage());
+        return false;
+    }
+}
+
 
    public Proveedor buscarPorId(int id) throws SQLException {
     Proveedor proveedor = null;
@@ -147,4 +168,46 @@ public class ProveedorDao {
     return lista;
     }
 
+    
+    public List<Proveedor> buscar(String criterio) {
+    List<Proveedor> lista = new ArrayList<>();
+    String sql = "SELECT * FROM proveedor " +
+                 "WHERE id LIKE ? OR nombre LIKE ? OR telefono LIKE ? OR razon LIKE ? OR numero_documento LIKE ?";
+
+    Connection con = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+        con = Conexion.getConnection(); // 👈 usa tu clase Conexion
+        ps = con.prepareStatement(sql);
+        ps.setString(1, "%" + criterio + "%");
+        ps.setString(2, "%" + criterio + "%");
+        ps.setString(3, "%" + criterio + "%");
+        ps.setString(4, "%" + criterio + "%");
+        ps.setString(5, "%" + criterio + "%");
+
+        rs = ps.executeQuery();
+        while (rs.next()) {
+            Proveedor p = new Proveedor();
+            p.setId(rs.getInt("id"));
+            p.setNombre(rs.getString("nombre"));
+            p.setTipo(rs.getString("tipo"));
+            p.setNumeroDocumento(rs.getString("numero_documento"));
+            p.setTelefono(rs.getString("telefono"));
+            p.setDireccion(rs.getString("direccion"));
+            p.setRazon(rs.getString("razon"));
+            lista.add(p);
+        }
+    } catch (SQLException e) {
+        System.out.println("Error al buscar proveedores: " + e.toString());
+    } finally {
+        try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+        try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+        try { if (con != null) con.close(); } catch (Exception ignored) {}
+    }
+    return lista;
+}
+
+    
 }

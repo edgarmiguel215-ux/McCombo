@@ -3,9 +3,12 @@ package Vista;
 
 import Modelo.login;
 import Modelo.LoginDAO;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import javax.swing.JOptionPane;
 
-public class Login extends javax.swing.JFrame {
+
+public class Login extends javax.swing.JFrame  {
     
     
     login lg = new login();
@@ -13,26 +16,33 @@ public class Login extends javax.swing.JFrame {
  
     public Login() {
         initComponents();
+        // Timer para actualizar fecha y hora cada segundo
+        iniciarReloj();
         this.setLocationRelativeTo(null);
+        txtPass.setEchoChar('*');   // Ocultar por defecto
+        lblProhibir.setVisible(false); // Ocultar icono prohibir al inicio
         
     }
+    
     public void validar(){
     String correo = txtCorreo.getText();
     String pass = String.valueOf(txtPass.getPassword());
-    
+
     if (!correo.isEmpty() && !pass.isEmpty()) {
-        login lg = new login();
         LoginDAO loginDAO = new LoginDAO();
         lg = loginDAO.log(correo, pass);
 
-        if (lg.getCorreo() != null && lg.getPass() != null){
-            String nombre = lg.getNombre();
-            String rol = lg.getRol();
-
-            // Abrir SistemaPrincipal pasando nombre y rol
-            SistemaPrincipal sis = new SistemaPrincipal(nombre, rol);
-            sis.setVisible(true);
-            this.dispose();
+        if (lg != null && lg.getCorreo() != null && lg.getPass() != null) {
+            // 🔎 Verificar estado del usuario
+            if ("Activo".equalsIgnoreCase(lg.getEstado())) {
+                SistemaPrincipal sis = new SistemaPrincipal(lg);
+                sis.setVisible(true);
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(null,
+                    "Este usuario está inactivo.\nContacte al administrador.",
+                    "Acceso denegado", JOptionPane.WARNING_MESSAGE);
+            }
         } else {
             JOptionPane.showMessageDialog(null, "Correo o Contraseña Incorrecta");
         }
@@ -40,9 +50,19 @@ public class Login extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(null, "Debes llenar todos los campos");
     }
 }
-   
-    
-    
+
+    private void iniciarReloj() {
+    javax.swing.Timer timer = new javax.swing.Timer(1000, e -> {
+        LocalDateTime ahora = LocalDateTime.now();
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy - HH:mm:ss");
+        String fechaHoraActual = ahora.format(formato).toUpperCase(); // en mayúsculas
+        txtFechaHoraPr.setText(fechaHoraActual);
+        txtFechaHoraPr.setBorder(null); // sin contorno
+        txtFechaHoraPr.setHorizontalAlignment(javax.swing.JTextField.CENTER); // centrado
+    });
+    timer.start();
+}
+
     
 
     /**
@@ -63,6 +83,9 @@ public class Login extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         RegistrarNuevoUsuario = new javax.swing.JButton();
+        lblProhibir = new javax.swing.JLabel();
+        lblVer = new javax.swing.JLabel();
+        txtFechaHoraPr = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -114,6 +137,20 @@ public class Login extends javax.swing.JFrame {
             }
         });
 
+        lblProhibir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/eye_closed.png"))); // NOI18N
+        lblProhibir.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblProhibirMouseClicked(evt);
+            }
+        });
+
+        lblVer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/eye-password.png"))); // NOI18N
+        lblVer.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblVerMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -121,46 +158,64 @@ public class Login extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(123, 123, 123)
-                        .addComponent(jLabel2))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(35, 35, 35)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(txtPass, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
                             .addComponent(jLabel4)
                             .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtCorreo)))
+                            .addComponent(txtCorreo))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblProhibir)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblVer))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(52, 52, 52)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel7)
-                            .addComponent(RegistrarNuevoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(33, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(52, 52, 52)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel7)
+                                    .addComponent(RegistrarNuevoUsuario, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(113, 113, 113)
+                                .addComponent(jLabel2)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(txtFechaHoraPr, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(32, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel2)
-                .addGap(18, 18, 18)
-                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(txtFechaHoraPr, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtCorreo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(35, 35, 35)
-                .addComponent(jLabel4)
-                .addGap(18, 18, 18)
-                .addComponent(txtPass, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(txtCorreo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(35, 35, 35)
+                        .addComponent(jLabel4)
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtPass, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblProhibir, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addComponent(lblVer))
                 .addGap(8, 8, 8)
                 .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton1)
                 .addGap(18, 18, 18)
                 .addComponent(RegistrarNuevoUsuario)
-                .addContainerGap(67, Short.MAX_VALUE))
+                .addGap(50, 50, 50))
         );
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 10, 290, 450));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 10, 290, 440));
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/Fondo.png"))); // NOI18N
         jLabel1.setText("Sucursal Galerias Acapulco");
@@ -185,6 +240,22 @@ public class Login extends javax.swing.JFrame {
     this.dispose(); // Cierra la ventana actual (opcional)
         
     }//GEN-LAST:event_RegistrarNuevoUsuarioActionPerformed
+
+    private void lblProhibirMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblProhibirMouseClicked
+        // TODO add your handling code here:
+         // Ocultar contraseña
+    txtPass.setEchoChar('*'); 
+    lblProhibir.setVisible(false); // Ocultar icono "prohibir"
+    lblVer.setVisible(true);       // Mostrar icono "ver"
+    }//GEN-LAST:event_lblProhibirMouseClicked
+
+    private void lblVerMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblVerMouseClicked
+        // TODO add your handling code here:
+        // Mostrar contraseña
+    txtPass.setEchoChar((char)0); 
+    lblVer.setVisible(false);      // Ocultar icono "ver"
+    lblProhibir.setVisible(true);  // Mostrar icono "prohibir"
+    }//GEN-LAST:event_lblVerMouseClicked
 
     /**
      * @param args the command line arguments
@@ -230,7 +301,10 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JLabel lblProhibir;
+    private javax.swing.JLabel lblVer;
     private javax.swing.JTextField txtCorreo;
+    private javax.swing.JLabel txtFechaHoraPr;
     private javax.swing.JPasswordField txtPass;
     // End of variables declaration//GEN-END:variables
 }

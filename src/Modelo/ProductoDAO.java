@@ -364,6 +364,47 @@ public boolean existeNombre(String nombre) {
     }
     return "";
 }
+    
+    
+    public int obtenerIdProductoPorNombre(String nombre) {
+    int idProducto = -1;
+    try (Connection con = new Conexion().getConnection()) {
+        PreparedStatement stmt = con.prepareStatement(
+            "SELECT id FROM Productos WHERE nombre = ?");
+        stmt.setString(1, nombre);
+        ResultSet rs = stmt.executeQuery();
+        if (rs.next()) {
+            idProducto = rs.getInt("id");
+        }
+        rs.close();
+        stmt.close();
+    } catch (SQLException e) {
+        System.err.println("Error al obtener id_producto: " + e.getMessage());
+    }
+    return idProducto;
+}
+
+    
+    public int obtenerIdPorNombre(String nombre) {
+    String sql = "SELECT id FROM productos WHERE nombre = ?";
+
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, nombre);
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+            return rs.getInt("id");
+        }
+
+    } catch (SQLException e) {
+        System.out.println("Error en obtenerIdPorNombre: " + e.getMessage());
+    }
+
+    return -1; // no encontrado
+}
+
 
     
 }

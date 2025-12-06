@@ -29,7 +29,7 @@ public class CompraDAO {
         ps.setString(9, c.getDatosPago());
         ps.setDate(10, new java.sql.Date(c.getFecha().getTime()));
         ps.setString(11, c.getEstado());
-        ps.setString(12, c.getArticulo());
+        ps.setString(12, c.getNombreArticulo());
 
         ps.executeUpdate();
         ResultSet rs = ps.getGeneratedKeys();
@@ -48,16 +48,16 @@ public class CompraDAO {
     daoInventario.insertarInventarioSiNoExiste(c);
 
     // 🔹 Luego, actualizar el inventario
-    String sql = "UPDATE inventario SET stock_actual = stock_actual + ?, costo_unitario = ?, valor_inventario = (stock_actual + ?) * ? , estado = ? WHERE id_articulo = ?";
+    String sql = "UPDATE inventario SET nombre = ?, stock_actual = stock_actual + ?, costo_unitario = ?, valor_inventario = (stock_actual + ?) * ? , estado = ? WHERE id_articulo = ?";
     try (Connection con = cn.getConnection();
          PreparedStatement ps = con.prepareStatement(sql)) {
-
-        ps.setInt(1, c.getCantidad());
-        ps.setDouble(2, c.getPrecioUnitario());
-        ps.setInt(3, c.getCantidad());
-        ps.setDouble(4, c.getPrecioUnitario());
-        ps.setString(5, c.getEstado());
-        ps.setInt(6, c.getIdArticulo());
+        ps.setString(1, c.getNombreArticulo());
+        ps.setInt(2, c.getCantidad());
+        ps.setDouble(3, c.getPrecioUnitario());
+        ps.setInt(4, c.getCantidad());
+        ps.setDouble(5, c.getPrecioUnitario());
+        ps.setString(6, c.getEstado());
+        ps.setInt(7, c.getIdArticulo());
 
         ps.executeUpdate();
     } catch (SQLException e) {
@@ -213,13 +213,13 @@ public class CompraDAO {
 
     public void actualizarInventarioDespuesDeEditar(Compra original, Compra editada) {
     String sqlSelect = "SELECT stock_actual, costo_unitario FROM inventario WHERE id_articulo = ?";
-    String sqlUpdate = "UPDATE inventario SET stock_actual = ?, valor_inventario = ?, costo_unitario = ?, unidad = ?, estado = ? WHERE id_articulo = ?";
+    String sqlUpdate = "UPDATE inventario SET nombre = ?, stock_actual = ?, valor_inventario = ?, costo_unitario = ?, unidad = ?, estado = ? WHERE id_articulo = ?";
 
     try (Connection con = cn.getConnection()) {
         int stockActual = 0;
         double costoUnitario = 0;
 
-        // 1️⃣ Obtener stock_actual y costo_unitario
+        // 1️ Obtener stock_actual y costo_unitario
         try (PreparedStatement psSelect = con.prepareStatement(sqlSelect)) {
             psSelect.setInt(1, editada.getIdArticulo());
             try (ResultSet rs = psSelect.executeQuery()) {
@@ -254,12 +254,14 @@ public class CompraDAO {
 
         // 4️⃣ Actualizar inventario
         try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
-            psUpdate.setInt(1, nuevoStock);
-            psUpdate.setDouble(2, nuevoValor);
-            psUpdate.setDouble(3, editada.getPrecioUnitario());
-            psUpdate.setString(4, editada.getUnidad());
-            psUpdate.setString(5, editada.getEstado());
-            psUpdate.setInt(6, editada.getIdArticulo());
+            psUpdate.setString(1, editada.getNombreArticulo()); // ✅ nombre actualizado
+            psUpdate.setInt(2, nuevoStock);
+            psUpdate.setDouble(3, nuevoValor);
+            psUpdate.setDouble(4, editada.getPrecioUnitario());
+            psUpdate.setString(5, editada.getUnidad());
+            psUpdate.setString(6, editada.getEstado());
+            psUpdate.setInt(7, editada.getIdArticulo());
+            psUpdate.executeUpdate();
 
             psUpdate.executeUpdate();
         }
@@ -273,7 +275,7 @@ public class CompraDAO {
 
     public boolean actualizarInventarioDespuesDeEliminar(Compra compra) {
     String sqlSelect = "SELECT stock_actual, costo_unitario FROM inventario WHERE id_articulo = ?";
-    String sqlUpdate = "UPDATE inventario SET stock_actual = ?, valor_inventario = ? WHERE id_articulo = ?";
+    String sqlUpdate = "UPDATE inventario SET nombre = ?, stock_actual = ?, valor_inventario = ? WHERE id_articulo = ?";
 
     try (Connection con = cn.getConnection()) {
 
@@ -300,9 +302,10 @@ public class CompraDAO {
 
         // 3️⃣ Actualizar solo stock_actual y valor_inventario
         try (PreparedStatement psUpdate = con.prepareStatement(sqlUpdate)) {
-            psUpdate.setInt(1, nuevoStock);
-            psUpdate.setDouble(2, nuevoValor);
-            psUpdate.setInt(3, compra.getIdArticulo());
+            psUpdate.setString(1, compra.getNombreArticulo()); // ✅ mantener nombre
+            psUpdate.setInt(2, nuevoStock);
+            psUpdate.setDouble(3, nuevoValor);
+            psUpdate.setInt(4, compra.getIdArticulo());
             return psUpdate.executeUpdate() > 0;
         }
 
@@ -311,6 +314,41 @@ public class CompraDAO {
         e.printStackTrace();
         return false;
     }
+}
+
+    public List<Compra> buscarComprasPorArticuloOProveedor(String criterio) {
+    List<Compra> lista = new ArrayList<>();
+    String sql = "SELECT c.idCompras, c.nombre_articulo, c.cantidad, c.unidad, " +
+                 "c.precio_unitario, c.total, c.comprobante, c.metodo_pago, " +
+                 "c.datos_pago, c.fecha, c.estado, p.nombre AS proveedor_nombre " +
+                 "FROM compras c " +
+                 "JOIN proveedor p ON c.idProveedor = p.id " +
+                 "WHERE c.nombre_articulo LIKE ? OR p.nombre LIKE ?";
+    try (Connection con = cn.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setString(1, "%" + criterio + "%");
+        ps.setString(2, "%" + criterio + "%");
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Compra c = new Compra();
+            c.setId(rs.getInt("idCompras"));
+            c.setNombreArticulo(rs.getString("nombre_articulo"));
+            c.setCantidad(rs.getInt("cantidad"));
+            c.setUnidad(rs.getString("unidad"));
+            c.setPrecioUnitario(rs.getDouble("precio_unitario"));
+            c.setTotal(rs.getDouble("total"));
+            c.setDatosPago(rs.getString("datos_pago"));
+            c.setProveedor(rs.getString("proveedor_nombre")); // ⚡ ahora sí existe
+            c.setComprobante(rs.getString("comprobante"));
+            c.setMetodoPago(rs.getString("metodo_pago"));
+            c.setFecha(rs.getDate("fecha"));
+            c.setEstado(rs.getString("estado"));
+            lista.add(c);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return lista;
 }
 
 }

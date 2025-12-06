@@ -2,11 +2,17 @@
 package Vista;
 
 import Modelo.CatalogosProductos;
+import Modelo.DetalleProducto;
+import Modelo.DetalleProductoDAO;
+import Modelo.InventarioDAO;
+import Modelo.ProductoDAO;
+import Modelo.login;
 import Reportes.TicketVenta;
 import java.awt.Color;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
@@ -17,16 +23,47 @@ public class Carrito extends javax.swing.JPanel {
     /**
      * Creates new form Carrito
      */
-    private String nombreCajero;
+    
+    private int idUsuario;
 
-    public Carrito() {
+    public Carrito(int idUsuario) {
+        
+        this.idUsuario = idUsuario;
         initComponents();
         configurarModeloCarrito(TablaCarritoCompras);
-        // Llamar al método que configura el placeholder
         configurarPlaceholder(txtCodigoPromocional, "Ingresa Código Promocional");
         txtCodigoPromocional.addActionListener(e -> actualizarResumen());
-
+        this.idUsuario = idUsuario;
+          
     }
+
+    public int getIdUsuario() {
+        return idUsuario;
+    }
+
+    public void setIdUsuario(int idUsuario) {
+        this.idUsuario = idUsuario;
+    }
+    
+    
+    
+    
+    private login usuario;
+
+    public void setUsuario(login usuario) {
+        this.usuario = usuario;
+    }
+
+    private String nombreCajero;
+
+//    public Carrito() {
+//        initComponents();
+//        configurarModeloCarrito(TablaCarritoCompras);
+//        // Llamar al método que configura el placeholder
+//        configurarPlaceholder(txtCodigoPromocional, "Ingresa Código Promocional");
+//        txtCodigoPromocional.addActionListener(e -> actualizarResumen());
+//
+//    }
 
     private void configurarModeloCarrito(JTable tabla) {
         DefaultTableModel modelo = new DefaultTableModel(
@@ -163,16 +200,32 @@ public class Carrito extends javax.swing.JPanel {
 
     // Totales
     double subtotal = Double.parseDouble(txtSubtotal.getText());
-    double descuento = Double.parseDouble(txtDescuentoAplicado.getText().replace("-", "").trim());
+
+    // Validar descuento para evitar NumberFormatException
+    double descuento = 0.0;
+    String descText = txtDescuentoAplicado.getText().replace("-", "").trim();
+    if (!descText.isEmpty()) {
+        try {
+            descuento = Double.parseDouble(descText);
+        } catch (NumberFormatException ex) {
+            descuento = 0.0;
+        }
+    }
+
     double totalPagar = Double.parseDouble(txtTotal.getText());
-    double cambio = 500 - totalPagar; // ejemplo, monto recibido 500
     String fecha = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date());
 
-    TicketVenta ticket = new TicketVenta();
+    // Crear ticket con número único
+    TicketVenta ticket = new TicketVenta(this.idUsuario); // usa el ID del usuario logueado
+    ticket.setCarrito(this);
+    String numeroTicket = ticket.generarNoTicket();
+
+
+
     ticket.llenarTicket(
         nombreCajero != null ? nombreCajero : "Desconocido",
         fecha,
-        "001",
+        numeroTicket,
         productosParaTicket,
         subtotal,
         subtotal * 0.16,
@@ -180,25 +233,157 @@ public class Carrito extends javax.swing.JPanel {
         totalPagar
     );
 
-
-
-   javax.swing.JFrame ventana = new javax.swing.JFrame("Ticket de Venta");
-
-    // Crear JScrollPane que contenga todo el ticket
+    // Mostrar ticket en ventana
+    javax.swing.JFrame ventana = new javax.swing.JFrame("Ticket de Venta");
     javax.swing.JScrollPane scrollTicket = new javax.swing.JScrollPane(ticket);
     scrollTicket.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollTicket.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-    ventana.add(scrollTicket); // agregar el JScrollPane en vez del JPanel directo
-    ventana.setSize(700, 500); // tamaño visible del JFrame
+    ventana.add(scrollTicket);
+    ventana.setSize(700, 500);
     ventana.setLocationRelativeTo(null);
     ventana.setVisible(true);
-    }
+
+    
+}
+
 
     public void setNombreCajero(String nombre) {
     this.nombreCajero = nombre;
 }
 
+    public void limpiarCarrito() {
+    DefaultTableModel modelo = (DefaultTableModel) TablaCarritoCompras.getModel();
+    modelo.setRowCount(0);
+
+    txtProductosCantidad.setText("Productos (0)");
+    txtSubtotal.setText("0.00");
+    txtDescuentoAplicado.setText("0.00");
+    txtTotal.setText("0.00");
+    txtCodigoPromocional.setText("Ingresa Código Promocional");
+    txtCodigoPromocional.setForeground(Color.GRAY);
+}
+
+    // Método para validar antes de generar el ticket
+    private boolean validarCarrito() {
+    DefaultTableModel modelo = (DefaultTableModel) TablaCarritoCompras.getModel();
+
+    // Validar que haya al menos un producto
+    if (modelo.getRowCount() == 0) {
+        javax.swing.JOptionPane.showMessageDialog(this,
+            "Debes agregar al menos un producto al carrito antes de continuar.",
+            "Carrito vacío",
+            javax.swing.JOptionPane.WARNING_MESSAGE
+        );
+        return false;
+    }
+
+    // Validar subtotal
+    try {
+        double subtotal = Double.parseDouble(txtSubtotal.getText());
+        if (subtotal <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "El subtotal debe ser mayor a 0.",
+                "Subtotal inválido",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return false;
+        }
+    } catch (NumberFormatException e) {
+        javax.swing.JOptionPane.showMessageDialog(this,
+            "El subtotal no es válido.",
+            "Error de formato",
+            javax.swing.JOptionPane.WARNING_MESSAGE
+        );
+        return false;
+    }
+
+    // Validar total
+    try {
+        double total = Double.parseDouble(txtTotal.getText());
+        if (total <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "El total debe ser mayor a 0.",
+                "Total inválido",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return false;
+        }
+    } catch (NumberFormatException e) {
+        javax.swing.JOptionPane.showMessageDialog(this,
+            "El total no es válido.",
+            "Error de formato",
+            javax.swing.JOptionPane.WARNING_MESSAGE
+        );
+        return false;
+    }
+
+    // Si todo está correcto
+    return true;
+}
+
+
+
+    private boolean verificarStockAntesDeVender() {
+
+    DetalleProductoDAO detalleDAO = new DetalleProductoDAO();
+    InventarioDAO inventarioDAO = new InventarioDAO();
+    ProductoDAO productoDAO = new ProductoDAO();
+
+    DefaultTableModel modelo = (DefaultTableModel) TablaCarritoCompras.getModel();
+    
+    
+    for (int i = 0; i < modelo.getRowCount(); i++) {
+
+        int idProducto = (int) modelo.getValueAt(i, 0);     // Columna ID del producto
+        int cantidadProducto = (int) modelo.getValueAt(i, 2); // Columna CANTIDAD
+        String nombreProducto = modelo.getValueAt(i, 1).toString();
+
+        // Si no sacas el ID desde la tabla, entonces usa:
+        // int idProducto = productoDAO.obtenerIdPorNombre(nombreProducto);
+        // y valida -1
+
+        System.out.println("=== Verificación de stock ===");
+        System.out.println("Producto: " + nombreProducto + ", ID=" + idProducto + ", Cantidad=" + cantidadProducto);
+
+        if (idProducto <= 0) {
+            JOptionPane.showMessageDialog(this,
+                "El producto '" + nombreProducto + "' no tiene ID válido.",
+                "Error de producto",
+                JOptionPane.ERROR_MESSAGE
+            );
+            return false;
+        }
+
+        // Lista de artículos que componen el producto
+        List<DetalleProducto> lista = detalleDAO.obtenerArticulosPorProducto(idProducto);
+
+        for (DetalleProducto dp : lista) {
+        int idArticulo = dp.getIdArticulo();
+        int cantidadNecesaria = dp.getCantidad() * cantidadProducto;
+
+        int stockActual = inventarioDAO.obtenerStock(idArticulo);
+
+        // Debug en consola
+        System.out.println("Artículo ID=" + idArticulo +
+                           ", Necesario=" + cantidadNecesaria +
+                           ", Stock=" + stockActual);
+
+        if (stockActual < cantidadNecesaria) {
+            JOptionPane.showMessageDialog(this,
+                "No hay suficiente stock del artículo ID: " + idArticulo +
+                "\nRequerido: " + cantidadNecesaria +
+                "\nDisponible: " + stockActual,
+                "Stock insuficiente",
+                JOptionPane.WARNING_MESSAGE
+            );
+            return false;  // Detener la venta
+            }
+        }
+    }
+
+    return true;  // Todo OK
+}
 
 
     /**
@@ -258,6 +443,10 @@ public class Carrito extends javax.swing.JPanel {
         jLabel2.setForeground(new java.awt.Color(0, 0, 0));
         jLabel2.setText("Total:");
 
+        btnContinuarCompra.setBackground(new java.awt.Color(255, 255, 255));
+        btnContinuarCompra.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnContinuarCompra.setForeground(new java.awt.Color(255, 153, 0));
+        btnContinuarCompra.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/continuar.png"))); // NOI18N
         btnContinuarCompra.setText("CONTINUAR CON LA COMPRA");
         btnContinuarCompra.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -280,32 +469,35 @@ public class Carrito extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 629, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(165, 165, 165)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jLabel2)
+                                .addContainerGap()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addGap(165, 165, 165)
+                                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(jLabel2)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(txtProductosCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(txtCodigoPromocional, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel4)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtDescuentoAplicado, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))))
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(txtProductosCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(42, 42, 42)
+                                .addComponent(btnContinuarCompra, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jLabel3)
                                 .addGap(18, 18, 18)
-                                .addComponent(txtCodigoPromocional, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtDescuentoAplicado, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(42, 42, 42)
-                        .addComponent(btnContinuarCompra, javax.swing.GroupLayout.PREFERRED_SIZE, 256, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel3)
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(txtTotal, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE)
-                            .addComponent(txtSubtotal))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(txtTotal, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE)
+                                    .addComponent(txtSubtotal))))
+                        .addGap(0, 227, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -350,12 +542,12 @@ public class Carrito extends javax.swing.JPanel {
         int cantidad = (int) modelo.getValueAt(fila, 2);
         double precio = (double) modelo.getValueAt(fila, 5);
 
-        // botón +
+        // boton +
         if (columna == 3) {
             cantidad++;
         }
 
-        // botón -
+        // boton -
         if (columna == 4) {
             if (cantidad > 1) {
                 cantidad--;
@@ -376,6 +568,16 @@ public class Carrito extends javax.swing.JPanel {
 
     private void btnContinuarCompraActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnContinuarCompraActionPerformed
         // TODO add your handling code here:
+        // Validar antes de generar ticket
+    if (!validarCarrito()) {
+        return; // Si falla alguna validación, no continúa
+    }
+    
+    if (!verificarStockAntesDeVender()) {
+        return;  // No continúa
+    }
+    
+    // Si pasa las validaciones, generar ticket
         generarTicket();
     }//GEN-LAST:event_btnContinuarCompraActionPerformed
 
