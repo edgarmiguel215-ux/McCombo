@@ -406,5 +406,33 @@ public boolean existeNombre(String nombre) {
 }
 
 
+    public List<Producto> buscarPorNombreOCategoria(String texto) {
+    List<Producto> lista = new ArrayList<>();
+    String sql = "SELECT p.id, p.codigo, p.nombre, p.precio, c.nombre AS categoria " +
+                 "FROM productos p INNER JOIN categorias c ON p.id_categoria = c.id " +
+                 "WHERE p.nombre LIKE ? OR c.nombre LIKE ?";
+
+    try (Connection conn = Conexion.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, "%" + texto + "%");
+        ps.setString(2, "%" + texto + "%");
+
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Producto p = new Producto();
+            p.setId(rs.getInt("id"));
+            p.setCodigo(rs.getString("codigo"));
+            p.setNombre(rs.getString("nombre"));
+            p.setPrecio(rs.getDouble("precio"));
+            p.setCategoria(rs.getString("categoria"));
+            lista.add(p);
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return lista;
+}
+
     
 }

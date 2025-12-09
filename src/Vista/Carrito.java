@@ -448,6 +448,7 @@ public class Carrito extends javax.swing.JPanel {
         btnContinuarCompra.setForeground(new java.awt.Color(255, 153, 0));
         btnContinuarCompra.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/continuar.png"))); // NOI18N
         btnContinuarCompra.setText("CONTINUAR CON LA COMPRA");
+        btnContinuarCompra.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnContinuarCompra.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnContinuarCompraActionPerformed(evt);

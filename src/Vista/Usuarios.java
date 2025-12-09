@@ -42,7 +42,7 @@ public class Usuarios extends javax.swing.JDialog {
     private List<Modelo.Usuarios> listaUsuarios = new ArrayList<>();
 
     
-
+///////////////EDITAR Y REGISTRAR////////////////////////////////////
     private final String CODIGO_VALIDO = "MCD2025"; //CODIGO PARA REGISTRAR Y EDITAR
     private final UsuariosDao dao = new UsuariosDao();
     private int idUsuarioSeleccionado = -1;
@@ -91,13 +91,14 @@ public class Usuarios extends javax.swing.JDialog {
 
 
     private void registrarUsuario() {
-    String correo = txtCorreoUsuario.getText();
-    String pass = txtContraseñaUsuario.getText();
-    String nombre = txtNombreUsuario.getText();
+    String correo = txtCorreoUsuario.getText().trim();
+    String passPlano = txtContraseñaUsuario.getText().trim();
+    String nombre = txtNombreUsuario.getText().trim();
     String rol = ComboBoxRolUsuario.getSelectedItem().toString();
-    String codigo = txtCodigoRegistro.getText();
+    String codigo = txtCodigoRegistro.getText().trim();
 
-    if (correo.isEmpty() || pass.isEmpty() || nombre.isEmpty() || codigo.isEmpty()) {
+    // Validaciones básicas
+    if (correo.isEmpty() || passPlano.isEmpty() || nombre.isEmpty() || codigo.isEmpty()) {
         JOptionPane.showMessageDialog(null, "Todos los campos son obligatorios");
         return;
     }
@@ -107,62 +108,130 @@ public class Usuarios extends javax.swing.JDialog {
         return;
     }
 
-    if (dao.existeUsuarioConNombreYPass(nombre, pass)) {
-    JOptionPane.showMessageDialog(null, "Ya existe un usuario con ese nombre y contraseña");
-    return;
-}
+    // Validar duplicado por correo
+    if (dao.existeUsuarioConCorreo(correo)) {
+        JOptionPane.showMessageDialog(null, "Ya existe un usuario con ese correo");
+        return;
+    }
 
-    
-    Modelo.Usuarios nuevo = new Modelo.Usuarios(nombre, correo, pass, rol);
-    if (dao.registrarUsuario(nuevo)) {
-        JOptionPane.showMessageDialog(null, "Usuario registrado exitosamente");
-        limpiarCampos();
-        listarUsuarios();
-    } else {
-        JOptionPane.showMessageDialog(null, "Error al registrar usuario");
+    // Encriptar contraseña con BCrypt
+    String passHash = org.mindrot.jbcrypt.BCrypt.hashpw(passPlano, org.mindrot.jbcrypt.BCrypt.gensalt(12));
+
+    // Generar secreto OTP
+    com.warrenstrange.googleauth.GoogleAuthenticator gAuth = new com.warrenstrange.googleauth.GoogleAuthenticator();
+    com.warrenstrange.googleauth.GoogleAuthenticatorKey key = gAuth.createCredentials();
+    String otpSecret = key.getKey();
+
+    // Crear objeto usuario
+    Modelo.Usuarios nuevo = new Modelo.Usuarios(nombre, correo, passHash, rol);
+    nuevo.setOtpSecret(otpSecret);
+    nuevo.setOtpEnabled(true);
+
+    // Registrar en BD
+if (dao.registrarUsuario(nuevo)) {
+    JOptionPane.showMessageDialog(null, 
+        "Usuario registrado exitosamente.\nEscanee el QR en Google Authenticator.");
+
+    limpiarCampos();
+    listarUsuarios();
+
+    // Generar URL para el QR
+    String qrUrl = com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator.getOtpAuthURL(
+            "SistemaVenta", correo, key);
+
+    try {
+        // Generar imagen QR con ZXing
+        com.google.zxing.qrcode.QRCodeWriter qrWriter = new com.google.zxing.qrcode.QRCodeWriter();
+        com.google.zxing.common.BitMatrix bitMatrix = qrWriter.encode(qrUrl,
+                com.google.zxing.BarcodeFormat.QR_CODE, 200, 200);
+
+        java.awt.image.BufferedImage qrImage = 
+                com.google.zxing.client.j2se.MatrixToImageWriter.toBufferedImage(bitMatrix);
+
+        // Mostrar QR en un JOptionPane
+        javax.swing.ImageIcon icon = new javax.swing.ImageIcon(qrImage);
+        javax.swing.JLabel qrLabel = new javax.swing.JLabel(icon);
+        JOptionPane.showMessageDialog(null, qrLabel, "Escanea este QR", JOptionPane.PLAIN_MESSAGE);
+
+    } catch (Exception ex) {
+        System.out.println("Error al generar QR: " + ex.toString());
+    }
+
+        } else {
+    JOptionPane.showMessageDialog(null, "Error al registrar usuario");
     }
 }
 
 
-   private void editarUsuario() {
+    private void editarUsuario() {
     if (idUsuarioSeleccionado == -1) {
         JOptionPane.showMessageDialog(null, "Selecciona un usuario de la tabla");
         return;
     }
 
     String correo = txtCorreoUsuario.getText().trim();
-    String pass = txtContraseñaUsuario.getText().trim();
+    String passPlano = txtContraseñaUsuario.getText().trim();
     String nombre = txtNombreUsuario.getText().trim();
     String rol = ComboBoxRolUsuario.getSelectedItem().toString();
     String codigo = txtCodigoRegistro.getText().trim();
 
-    if (correo.isEmpty() || pass.isEmpty() || nombre.isEmpty() || codigo.isEmpty()) {
+    if (correo.isEmpty() || nombre.isEmpty() || codigo.isEmpty()) {
         JOptionPane.showMessageDialog(null, "Todos los campos son obligatorios");
         return;
     }
+
+    // La contraseña puede venir VACÍA → significa que NO se desea cambiar
+    // Por eso NO la ponemos en el if de arriba
 
     if (!codigo.equals(CODIGO_VALIDO)) {
         JOptionPane.showMessageDialog(null, "Código de edición inválido");
         return;
     }
 
-    // Validación mejorada: excluye al usuario actual
+    // Validación mejorada
     if (dao.existeUsuarioConNombreYCorreoExcluyendoId(nombre, correo, idUsuarioSeleccionado)) {
         JOptionPane.showMessageDialog(null, "Ya existe otro usuario con ese nombre y correo");
         return;
     }
 
-    Modelo.Usuarios actualizado = new Modelo.Usuarios(idUsuarioSeleccionado, nombre, correo, pass, rol);
+    // Obtener el usuario actual desde la BD
+    Modelo.Usuarios usuarioActual = dao.obtenerUsuarioPorId(idUsuarioSeleccionado);
+
+    if (usuarioActual == null) {
+        JOptionPane.showMessageDialog(null, "Error: No se encontró el usuario en la base de datos.");
+        return;
+    }
+
+    String passFinal;
+
+    if (passPlano.isEmpty()) {
+        // ❗ No se cambia contraseña → mantener hash actual
+        passFinal = usuarioActual.getPass();
+    } else {
+        // ❗ Sí se cambia → generar nuevo hash BCrypt
+        passFinal = org.mindrot.jbcrypt.BCrypt.hashpw(passPlano, org.mindrot.jbcrypt.BCrypt.gensalt(12));
+    }
+
+    // Crear objeto usuario actualizado
+    Modelo.Usuarios actualizado = new Modelo.Usuarios(
+            idUsuarioSeleccionado,
+            nombre,
+            correo,
+            passFinal,
+            rol
+    );
+
     if (dao.actualizarUsuario(actualizado)) {
         JOptionPane.showMessageDialog(null, "Usuario actualizado. Debes iniciar sesión nuevamente.");
-        // Cerrar todas las ventanas abiertas
+
+        // Cerrar todas las ventanas
         java.awt.Window[] ventanas = java.awt.Window.getWindows();
         for (java.awt.Window w : ventanas) {
             w.dispose();
         }
 
-        // Volver a la ventana de login
         new Login().setVisible(true);
+
     } else {
         JOptionPane.showMessageDialog(null, "Error al actualizar usuario");
     }
@@ -183,7 +252,7 @@ public class Usuarios extends javax.swing.JDialog {
         JOptionPane.showMessageDialog(null, "Debes ingresar el código de autorización para eliminar");
         return;
     }
-
+///////////////CODIGO PARA ELIMINAR///////////////////////
     if (!codigo.equals("DELETE USER101")) {//CODIGO PARA ELIMAR USUARIOS
         JOptionPane.showMessageDialog(null, "Código de eliminación inválido");
         return;

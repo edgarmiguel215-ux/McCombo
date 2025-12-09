@@ -215,6 +215,9 @@
               <Image iconType="3" name="/Img/continuar.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="CONTINUAR CON LA COMPRA"/>
+            <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
+              <Color id="Hand Cursor"/>
+            </Property>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnContinuarCompraActionPerformed"/>

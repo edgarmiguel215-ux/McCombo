@@ -6,6 +6,7 @@ import Modelo.LoginDAO;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.swing.JOptionPane;
+import com.warrenstrange.googleauth.GoogleAuthenticator;
 
 
 public class Login extends javax.swing.JFrame  {
@@ -24,30 +25,69 @@ public class Login extends javax.swing.JFrame  {
         
     }
     
-    public void validar(){
-    String correo = txtCorreo.getText();
-    String pass = String.valueOf(txtPass.getPassword());
+    
 
-    if (!correo.isEmpty() && !pass.isEmpty()) {
-        LoginDAO loginDAO = new LoginDAO();
-        lg = loginDAO.log(correo, pass);
+    private void validar() {
+    String correo = txtCorreo.getText().trim();
+    String passIngresada = String.valueOf(txtPass.getPassword()).trim();
 
-        if (lg != null && lg.getCorreo() != null && lg.getPass() != null) {
-            // 🔎 Verificar estado del usuario
-            if ("Activo".equalsIgnoreCase(lg.getEstado())) {
-                SistemaPrincipal sis = new SistemaPrincipal(lg);
-                sis.setVisible(true);
-                this.dispose();
-            } else {
-                JOptionPane.showMessageDialog(null,
-                    "Este usuario está inactivo.\nContacte al administrador.",
-                    "Acceso denegado", JOptionPane.WARNING_MESSAGE);
-            }
+    System.out.println("Correo ingresado: " + correo);
+    System.out.println("Pass ingresada: " + passIngresada);
+
+    if (correo.isEmpty() || passIngresada.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Debes llenar todos los campos");
+        return;
+    }
+
+    LoginDAO loginDAO = new LoginDAO();
+    lg = loginDAO.obtenerUsuarioPorCorreo(correo); // Cargar usuario
+
+    System.out.println("Usuario encontrado en BD: " + (lg != null));
+
+    if (lg == null) {
+        JOptionPane.showMessageDialog(this, "Correo o contraseña incorrectos");
+        return;
+    }
+
+    // Mostrar pass recuperada
+    System.out.println("Pass en BD: " + lg.getPass());
+
+    // Comparar contraseña con BCrypt
+    boolean passCorrecta = org.mindrot.jbcrypt.BCrypt.checkpw(passIngresada, lg.getPass());
+    System.out.println("BCrypt checkpw = " + passCorrecta);
+
+    if (!passCorrecta) {
+        JOptionPane.showMessageDialog(this, "Correo o contraseña incorrectos");
+        return;
+    }
+
+    // Verificar estado
+    if (!"Activo".equalsIgnoreCase(lg.getEstado())) {
+        JOptionPane.showMessageDialog(this, "Este usuario está inactivo. Contacte al administrador.");
+        return;
+    }
+
+    // Pedir OTP
+    String otpIngresado = JOptionPane.showInputDialog(this,
+            "Ingrese el código OTP de Google Authenticator:");
+
+    if (otpIngresado == null) return;
+
+    try {
+        int code = Integer.parseInt(otpIngresado.trim());
+        GoogleAuthenticator gAuth = new GoogleAuthenticator();
+        boolean isValid = gAuth.authorize(lg.getOtpSecret(), code);
+
+        if (isValid) {
+            SistemaPrincipal sis = new SistemaPrincipal(lg);
+            sis.setVisible(true);
+            this.dispose();
         } else {
-            JOptionPane.showMessageDialog(null, "Correo o Contraseña Incorrecta");
+            JOptionPane.showMessageDialog(this, "Código OTP incorrecto. Acceso denegado.");
         }
-    } else {
-        JOptionPane.showMessageDialog(null, "Debes llenar todos los campos");
+
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(this, "Formato de código inválido.");
     }
 }
 
@@ -138,6 +178,7 @@ public class Login extends javax.swing.JFrame  {
         });
 
         lblProhibir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/eye_closed.png"))); // NOI18N
+        lblProhibir.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblProhibir.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblProhibirMouseClicked(evt);
@@ -145,6 +186,7 @@ public class Login extends javax.swing.JFrame  {
         });
 
         lblVer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Img/eye-password.png"))); // NOI18N
+        lblVer.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblVer.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblVerMouseClicked(evt);

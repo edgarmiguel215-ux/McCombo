@@ -9,6 +9,8 @@ public class login {
     private String pass;
     private String Rol;
     private String estado;
+    private String otpSecret;
+    private boolean otpEnabled;
 
     public login() {
     }
@@ -28,6 +30,23 @@ public class login {
         this.pass = pass;
         this.Rol = Rol;
         this.estado = estado;
+    }
+
+    public boolean isOtpEnabled() {
+        return otpEnabled;
+    }
+
+    public void setOtpEnabled(boolean otpEnabled) {
+        this.otpEnabled = otpEnabled;
+    }
+
+    
+    public String getOtpSecret() {
+        return otpSecret;
+    }
+
+    public void setOtpSecret(String otpSecret) {
+        this.otpSecret = otpSecret;
     }
     
     

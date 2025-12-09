@@ -67,12 +67,14 @@ public class ReporteDAO {
 }
 
     
+    // ✅ Productos más vendidos sin duplicados
     public List<Object[]> productosMasVendidos() {
     List<Object[]> lista = new ArrayList<>();
-    String sql = "SELECT p.nombre, SUM(dt.cantidad), SUM(dt.subtotal) " +
+    String sql = "SELECT p.nombre, SUM(dt.cantidad) AS cantidadVendida, SUM(dt.subtotal) AS ingresos " +
                  "FROM detalle_ticket dt " +
-                 "JOIN productos p ON dt.id_producto = p.id " +
-                 "GROUP BY p.nombre ORDER BY SUM(dt.cantidad) DESC";
+                 "INNER JOIN productos p ON dt.id_producto = p.id " +
+                 "GROUP BY p.id, p.nombre " +
+                 "ORDER BY cantidadVendida DESC";
 
     try (Connection con = Conexion.getConnection();
          PreparedStatement ps = con.prepareStatement(sql);
@@ -80,18 +82,17 @@ public class ReporteDAO {
 
         while (rs.next()) {
             lista.add(new Object[]{
-                rs.getString(1),  // nombre del producto
-                rs.getInt(2),     // cantidad vendida
-                rs.getDouble(3)   // ingresos generados
+                rs.getString("nombre"),       // Producto
+                rs.getInt("cantidadVendida"), // Cantidad Vendida
+                rs.getDouble("ingresos")      // Ingresos Generados
             });
         }
 
     } catch (SQLException e) {
-        System.err.println("Error en productosMasVendidos: " + e.getMessage());
+        System.err.println("❌ Error en productosMasVendidos: " + e.getMessage());
     }
     return lista;
 }
-    
     // 🔹 Ventas por Usuario (todos)
     public List<Object[]> ventasPorUsuarioBusqueda() {
     List<Object[]> lista = new ArrayList<>();
@@ -147,11 +148,11 @@ public class ReporteDAO {
     List<Object[]> lista = new ArrayList<>();
     String sql = "SELECT p.nombre, SUM(dt.cantidad) AS cantidadVendida, SUM(dt.subtotal) AS ingresos " +
                  "FROM detalle_ticket dt INNER JOIN productos p ON dt.id_producto = p.id " +
-                 "GROUP BY p.nombre";
-    try {
-        Connection con = conexion.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
-        ResultSet rs = ps.executeQuery();
+                 "GROUP BY p.id, p.nombre ORDER BY cantidadVendida DESC";
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
         while (rs.next()) {
             Object[] fila = {
                 rs.getString("nombre"),
@@ -166,17 +167,15 @@ public class ReporteDAO {
     return lista;
 }
 
-
     // 🔹 Productos más vendidos con filtro
     public List<Object[]> productosMasVendidosFiltro(String criterio) {
     List<Object[]> lista = new ArrayList<>();
     String sql = "SELECT p.nombre, SUM(dt.cantidad) AS cantidadVendida, SUM(dt.subtotal) AS ingresos " +
                  "FROM detalle_ticket dt INNER JOIN productos p ON dt.id_producto = p.id " +
                  "WHERE p.nombre LIKE ? " +
-                 "GROUP BY p.nombre";
-    try {
-        Connection con = conexion.getConnection();
-        PreparedStatement ps = con.prepareStatement(sql);
+                 "GROUP BY p.id, p.nombre ORDER BY cantidadVendida DESC";
+    try (Connection con = conexion.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
         ps.setString(1, "%" + criterio + "%");
         ResultSet rs = ps.executeQuery();
         while (rs.next()) {
@@ -192,5 +191,4 @@ public class ReporteDAO {
     }
     return lista;
 }
-
 }

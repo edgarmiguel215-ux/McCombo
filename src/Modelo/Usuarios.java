@@ -10,6 +10,8 @@ public class Usuarios {
     private String pass;
     private String rol;
     private String estado;
+    private String otpSecret;
+    private boolean otpEnabled;
 
     public Usuarios() {
     }
@@ -22,6 +24,23 @@ public class Usuarios {
         this.rol = rol;
         this.estado = estado;
     }
+
+    public String getOtpSecret() {
+        return otpSecret;
+    }
+
+    public void setOtpSecret(String otpSecret) {
+        this.otpSecret = otpSecret;
+    }
+
+    public boolean isOtpEnabled() {
+        return otpEnabled;
+    }
+
+    public void setOtpEnabled(boolean otpEnabled) {
+        this.otpEnabled = otpEnabled;
+    }
+    
 
     public String getEstado() {
         return estado;

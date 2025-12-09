@@ -10,11 +10,13 @@ import Modelo.DetalleProductoDAO;
 import Modelo.Producto;
 import Modelo.ProductoDAO;
 import Modelo.login;
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
@@ -53,6 +55,8 @@ public class Administración extends javax.swing.JFrame {
         
         this.usuario = usuario;
         initComponents();
+        activarBusquedaEnTiempoReal();
+        aplicarPlaceholder(txtBuscarProductos, "Buscar Por Nombre o Categoria.");
         this.setLocationRelativeTo(null);
         modeloCategoria = (DefaultTableModel) TableCategoria.getModel();
         modeloProducto = (DefaultTableModel) TableProductos.getModel();
@@ -575,6 +579,64 @@ public class Administración extends javax.swing.JFrame {
 
 
 
+    private void buscarProductos() {
+    String texto = txtBuscarProductos.getText().trim();
+
+    modeloProducto.setRowCount(0); // limpiar tabla
+
+    List<Producto> resultados;
+    if (texto.isEmpty()) {
+        // Si está vacío, mostrar todos
+        resultados = productoDAO.listar();
+    } else {
+        // Buscar en BD con LIKE
+        resultados = productoDAO.buscarPorNombreOCategoria(texto);
+    }
+
+    // Actualizar tabla
+    for (Producto p : resultados) {
+        modeloProducto.addRow(new Object[]{
+            p.getCodigo(),
+            p.getNombre(),
+            p.getPrecio(),
+            p.getCategoria()
+        });
+    }
+}
+
+    private void activarBusquedaEnTiempoReal() {
+    txtBuscarProductos.addKeyListener(new java.awt.event.KeyAdapter() {
+        @Override
+        public void keyReleased(java.awt.event.KeyEvent evt) {
+            buscarProductos();  // Llama tu método
+        }
+    });
+}
+    
+    public static void aplicarPlaceholder(JTextField campo, String placeholder) {
+    campo.setText(placeholder);
+    campo.setForeground(Color.GRAY);
+
+    campo.addFocusListener(new java.awt.event.FocusAdapter() {
+        @Override
+        public void focusGained(java.awt.event.FocusEvent e) {
+            if (campo.getText().equals(placeholder)) {
+                campo.setText("");
+                campo.setForeground(Color.BLACK);
+            }
+        }
+
+        @Override
+        public void focusLost(java.awt.event.FocusEvent e) {
+            if (campo.getText().isEmpty()) {
+                campo.setText(placeholder);
+                campo.setForeground(Color.GRAY);
+            }
+        }
+    });
+}
+    
+
 
 
 
@@ -623,6 +685,7 @@ public class Administración extends javax.swing.JFrame {
         txtIdProductos = new javax.swing.JTextField();
         btnSeleccionarImagen = new javax.swing.JButton();
         txtRutaImagen = new javax.swing.JTextField();
+        txtBuscarProductos = new javax.swing.JTextField();
         jPanel4 = new javax.swing.JPanel();
         jLabel11 = new javax.swing.JLabel();
         jLabel12 = new javax.swing.JLabel();
@@ -915,13 +978,16 @@ public class Administración extends javax.swing.JFrame {
                         .addContainerGap())
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addGap(100, 100, 100)
-                        .addComponent(btnEliminarProducto)
-                        .addGap(31, 31, 31)
-                        .addComponent(btnLimpiarFormularioProducto)
-                        .addGap(35, 35, 35)
-                        .addComponent(btnGuardarProducto)
-                        .addGap(42, 42, 42)
-                        .addComponent(btnEditarProductos)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtBuscarProductos, javax.swing.GroupLayout.PREFERRED_SIZE, 337, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(btnEliminarProducto)
+                                .addGap(31, 31, 31)
+                                .addComponent(btnLimpiarFormularioProducto)
+                                .addGap(35, 35, 35)
+                                .addComponent(btnGuardarProducto)
+                                .addGap(42, 42, 42)
+                                .addComponent(btnEditarProductos)))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel3Layout.setVerticalGroup(
@@ -948,7 +1014,9 @@ public class Administración extends javax.swing.JFrame {
                         .addContainerGap()
                         .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
                 .addGap(18, 18, 18)
-                .addComponent(jLabel10)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel10)
+                    .addComponent(txtBuscarProductos, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -964,7 +1032,7 @@ public class Administración extends javax.swing.JFrame {
                             .addComponent(btnEditarProductos))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(txtRutaImagen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(29, Short.MAX_VALUE))
+                .addContainerGap(19, Short.MAX_VALUE))
         );
 
         Articulo.addTab("Productos ", jPanel3);
@@ -1374,6 +1442,7 @@ public class Administración extends javax.swing.JFrame {
     }
     
 
+    
 
     }//GEN-LAST:event_TableArticuloMouseClicked
 
@@ -1604,6 +1673,7 @@ public class Administración extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JTextField txtBuscarProductos;
     private javax.swing.JTextField txtCantidadArticulo;
     private javax.swing.JTextField txtCodigoDetalleProducto;
     private javax.swing.JTextField txtCodigoProducto;

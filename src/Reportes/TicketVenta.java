@@ -316,15 +316,15 @@ public class TicketVenta extends javax.swing.JPanel {
         gracias.setAlignment(Element.ALIGN_CENTER);
         document.add(gracias);
 
-        Paragraph cliente = new Paragraph("Cliente: " + txtNombreCliente.getText(), fuentePequena);
+        Paragraph cliente = new Paragraph("Cliente  Sr/Sra: " + txtNombreCliente.getText(), fuentePequena);
         cliente.setAlignment(Element.ALIGN_CENTER);
         document.add(cliente);
 
-        Paragraph tel = new Paragraph("Para Información. Tel: 744-555-1234", fuentePequena);
+        Paragraph tel = new Paragraph("Para Información Comunicarse al Tel: 744-555-1234", fuentePequena);
         tel.setAlignment(Element.ALIGN_CENTER);
         document.add(tel);
 
-        Paragraph aviso = new Paragraph("*No se aceptan cambios ni devoluciones en alimentos.*", fuentePequena);
+        Paragraph aviso = new Paragraph("*No se aceptan cambios ni devoluciones en alimentos y Bebidas.*", fuentePequena);
         aviso.setAlignment(Element.ALIGN_CENTER);
         document.add(aviso);
 
@@ -688,6 +688,7 @@ public class TicketVenta extends javax.swing.JPanel {
         txtNombreCliente = new javax.swing.JTextField();
         btnFinalizarTicket = new javax.swing.JButton();
         comboFormaPago = new javax.swing.JComboBox<>();
+        jLabel18 = new javax.swing.JLabel();
 
         setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
@@ -792,7 +793,11 @@ public class TicketVenta extends javax.swing.JPanel {
         txtNombreCliente.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         txtNombreCliente.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
+        btnFinalizarTicket.setBackground(new java.awt.Color(0, 0, 0));
+        btnFinalizarTicket.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btnFinalizarTicket.setForeground(new java.awt.Color(255, 255, 255));
         btnFinalizarTicket.setText("[ Finalizar / Generar Ticket ] ");
+        btnFinalizarTicket.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnFinalizarTicket.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnFinalizarTicketActionPerformed(evt);
@@ -806,6 +811,10 @@ public class TicketVenta extends javax.swing.JPanel {
             }
         });
 
+        jLabel18.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        jLabel18.setForeground(new java.awt.Color(0, 0, 0));
+        jLabel18.setText("Sr/Sra:");
+
         javax.swing.GroupLayout panelTicketLayout = new javax.swing.GroupLayout(panelTicket);
         panelTicket.setLayout(panelTicketLayout);
         panelTicketLayout.setHorizontalGroup(
@@ -814,14 +823,46 @@ public class TicketVenta extends javax.swing.JPanel {
                 .addGap(91, 91, 91)
                 .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panelTicketLayout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(287, 287, 287))
-                    .addGroup(panelTicketLayout.createSequentialGroup()
-                        .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(panelTicketLayout.createSequentialGroup()
-                                .addComponent(jLabel13)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtMontoRecibido, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jLabel13)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtMontoRecibido, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel11)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txtTotalPagar))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel10)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txtDescuento))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel9)
+                            .addGap(18, 18, 18)
+                            .addComponent(txtIVA))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel8)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txtSubtotal))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel6)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txtFechaActual))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel7)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txtNombreCajero))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel5)
+                            .addGap(12, 12, 12)
+                            .addComponent(txtNoTicket))
+                        .addGroup(panelTicketLayout.createSequentialGroup()
                             .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addGroup(panelTicketLayout.createSequentialGroup()
                                     .addComponent(jLabel14)
@@ -832,45 +873,17 @@ public class TicketVenta extends javax.swing.JPanel {
                                 .addGroup(panelTicketLayout.createSequentialGroup()
                                     .addComponent(jLabel12)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(comboFormaPago, javax.swing.GroupLayout.PREFERRED_SIZE, 344, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(3, 3, 3))
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
-                                    .addComponent(jLabel11)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(txtTotalPagar))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
-                                    .addComponent(jLabel10)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(txtDescuento))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
-                                    .addComponent(jLabel9)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(txtIVA))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
-                                    .addComponent(jLabel8)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(txtSubtotal))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
-                                    .addComponent(jLabel6)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(txtFechaActual))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
-                                    .addComponent(jLabel7)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(txtNombreCajero))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, panelTicketLayout.createSequentialGroup()
-                                    .addComponent(jLabel5)
-                                    .addGap(12, 12, 12)
-                                    .addComponent(txtNoTicket))
-                                .addComponent(txtNombreCliente, javax.swing.GroupLayout.Alignment.LEADING)))
-                        .addContainerGap(110, Short.MAX_VALUE))))
+                                    .addComponent(comboFormaPago, javax.swing.GroupLayout.PREFERRED_SIZE, 344, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGap(3, 3, 3))
+                        .addGroup(panelTicketLayout.createSequentialGroup()
+                            .addComponent(jLabel18)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(txtNombreCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 303, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(110, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelTicketLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         panelTicketLayout.setVerticalGroup(
             panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -929,12 +942,14 @@ public class TicketVenta extends javax.swing.JPanel {
                 .addGap(51, 51, 51)
                 .addComponent(jLabel15)
                 .addGap(11, 11, 11)
-                .addComponent(txtNombreCliente, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(panelTicketLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtNombreCliente, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel18))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel16)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel17)
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addContainerGap(26, Short.MAX_VALUE))
         );
 
         add(panelTicket, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 660, 1020));
@@ -980,6 +995,7 @@ public class TicketVenta extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import org.mindrot.jbcrypt.BCrypt;
+import com.warrenstrange.googleauth.*;
 
 public class UsuariosDao {
     
@@ -16,15 +18,23 @@ public class UsuariosDao {
     PreparedStatement ps;
     ResultSet rs;
 
-    public boolean registrarUsuario(Usuarios u) {
-    String sql = "INSERT INTO usuarios (nombre, correo, pass, rol, estado) VALUES (?, ?, ?, ?, 'Activo')";
+   public boolean registrarUsuario(Usuarios u) {
+    String sql = "INSERT INTO usuarios (nombre, correo, pass, rol, estado, otp_secret, otp_enabled) VALUES (?, ?, ?, ?, 'Activo', ?, ?)";
     try {
         con = cn.getConnection();
         ps = con.prepareStatement(sql);
+
+        // Hash REAL de la contraseña
+        String hash = BCrypt.hashpw(u.getPass(), BCrypt.gensalt(12));
+
+        // Guardar secret que viene desde Registrar.java
         ps.setString(1, u.getNombre());
         ps.setString(2, u.getCorreo());
-        ps.setString(3, u.getPass());
+        ps.setString(3, hash); // HASH correcto
         ps.setString(4, u.getRol());
+        ps.setString(5, u.getOtpSecret()); // ← YA VENÍA GENERADO
+        ps.setInt(6, u.isOtpEnabled() ? 1 : 0);
+
         ps.executeUpdate();
         return true;
     } catch (SQLException e) {
@@ -33,7 +43,6 @@ public class UsuariosDao {
     }
 }
 
-   
     
     // Listar usuarios
     public List<Usuarios> listarUsuarios() {
@@ -112,24 +121,55 @@ public class UsuariosDao {
             System.out.println("Error al cerrar recursos: " + e.toString());
         }
     }
-
-    public boolean existeUsuarioConNombreYPass(String nombre, String pass) {
-    String sql = "SELECT COUNT(*) FROM usuarios WHERE nombre = ? AND pass = ?";
+    
+    public Usuarios login(String correo, String passPlano) {
+    String sql = "SELECT * FROM usuarios WHERE correo = ? AND estado = 'Activo'";
     try {
         con = cn.getConnection();
         ps = con.prepareStatement(sql);
-        ps.setString(1, nombre);
-        ps.setString(2, pass);
+        ps.setString(1, correo);
         rs = ps.executeQuery();
+
         if (rs.next()) {
-            return rs.getInt(1) > 0;
+            String hash = rs.getString("pass");
+            boolean ok = BCrypt.checkpw(passPlano, hash);
+
+            if (ok) {
+                Usuarios u = new Usuarios();
+                u.setId(rs.getInt("id"));
+                u.setNombre(rs.getString("nombre"));
+                u.setCorreo(rs.getString("correo"));
+                u.setRol(rs.getString("rol"));
+                u.setEstado(rs.getString("estado"));
+                u.setOtpSecret(rs.getString("otp_secret"));
+                u.setOtpEnabled(rs.getInt("otp_enabled") == 1);
+                return u;
+            }
         }
     } catch (SQLException e) {
-        System.out.println("Error al verificar duplicado: " + e.toString());
+        System.out.println("Error en login: " + e.toString());
     }
-    return false;
+    return null;
 }
 
+
+    public boolean existeUsuarioConCorreo(String correo) {
+        String sql = "SELECT COUNT(*) FROM usuarios WHERE correo = ?";
+        try {
+            con = cn.getConnection();
+            ps = con.prepareStatement(sql);
+            ps.setString(1, correo);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al verificar correo: " + e.toString());
+        } finally {
+            cerrarRecursos(rs, ps, con);
+        }
+        return false;
+    }
     
 
     
@@ -188,6 +228,29 @@ public class UsuariosDao {
 }
 
 
-    
+    public Usuarios obtenerUsuarioPorId(int id) {
+    String sql = "SELECT * FROM usuarios WHERE id = ?";
+    try {
+        con = cn.getConnection();
+        ps = con.prepareStatement(sql);
+        ps.setInt(1, id);
+        rs = ps.executeQuery();
+
+        if (rs.next()) {
+            Usuarios u = new Usuarios();
+            u.setId(rs.getInt("id"));
+            u.setNombre(rs.getString("nombre"));
+            u.setCorreo(rs.getString("correo"));
+            u.setPass(rs.getString("pass"));
+            u.setRol(rs.getString("rol"));
+            u.setEstado(rs.getString("estado"));
+            return u;
+        }
+    } catch (SQLException e) {
+        System.out.println("Error en obtenerUsuarioPorId: " + e.toString());
+    }
+    return null;
+}
+
 }
 

@@ -4,6 +4,17 @@ package Vista;
 import Modelo.Usuarios;
 import Modelo.UsuariosDao;
 import javax.swing.JOptionPane;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.warrenstrange.googleauth.GoogleAuthenticator;
+import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
+import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
+
+import javax.swing.*;
+import java.awt.image.BufferedImage;
 
 public class Registrar extends javax.swing.JFrame {
 
@@ -27,7 +38,23 @@ public class Registrar extends javax.swing.JFrame {
     comboRol.setSelectedIndex(0);
 }
 
+    private void mostrarQR(String otpAuthUrl) {
+    try {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(otpAuthUrl, BarcodeFormat.QR_CODE, 200, 200);
+        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
 
+        ImageIcon icon = new ImageIcon(qrImage);
+        JLabel lblQR = new JLabel(icon);
+        JOptionPane.showMessageDialog(this, lblQR, "Escanee este QR en Google Authenticator", JOptionPane.PLAIN_MESSAGE);
+    } catch (WriterException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error al generar QR: " + e.getMessage());
+    }
+}
+    
+    
+    ///CODIGO DE REGISTRO/////
     private final String CODIGO_VALIDO = "MCD2025";
 
 
@@ -226,42 +253,67 @@ public class Registrar extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void RegistrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegistrarActionPerformed
-        // TODO add your handling code here:    
-    String nombre = txtNombre.getText();
-    String correo = txtCorreo.getText();
-    String pass = new String(txtPassword.getPassword());
-    String rol = comboRol.getSelectedItem().toString();
-    String codigo = txtCodigoRegistro.getText();
+        String nombre = txtNombre.getText().trim();
+        String correo = txtCorreo.getText().trim();
+        String passPlano = new String(txtPassword.getPassword()).trim();
+        String rol = comboRol.getSelectedItem().toString();
+        String codigo = txtCodigoRegistro.getText().trim();
 
-    if (nombre.isEmpty() || correo.isEmpty() || pass.isEmpty() || codigo.isEmpty()) {
-    JOptionPane.showMessageDialog(null, "Todos los campos son obligatorios");
-    return;
-    }
+        if (nombre.isEmpty() || correo.isEmpty() || passPlano.isEmpty() || codigo.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Todos los campos son obligatorios");
+            return;
+        }
 
-    if (!codigo.equals(CODIGO_VALIDO)) {
-    JOptionPane.showMessageDialog(null, "Código de registro inválido");
-    return;
-}
+        if (!codigo.equals(CODIGO_VALIDO)) {
+            JOptionPane.showMessageDialog(null, "Código de registro inválido");
+            return;
+        }
 
-//    String rol = comboRol.getSelectedItem().toString(); // Asegúrate de tener este combo
-    Usuarios nuevo = new Usuarios(nombre, correo, pass, rol);
-    UsuariosDao dao = new UsuariosDao();
+        UsuariosDao dao = new UsuariosDao();
 
-if (dao.existeUsuarioConNombreYPass(nombre, pass)) {
-    JOptionPane.showMessageDialog(null, "Ya existe un usuario con ese nombre y contraseña");
-    return;
-}
+        // Validar duplicado por correo
+        if (dao.existeUsuarioConCorreo(correo)) {
+            JOptionPane.showMessageDialog(null, "Ya existe un usuario con ese correo");
+            return;
+        }
 
-    if (dao.registrarUsuario(nuevo)) {
-        JOptionPane.showMessageDialog(null, "Usuario registrado exitosamente");
-        
-        LimpiarCampos(); // limpia el formulario
-        this.dispose(); // cierra la ventana actual
-        // Abre la pantalla principal (ajusta el nombre si es diferente)
-        new Login().setVisible(true);
-    } else {
-        JOptionPane.showMessageDialog(null, "Error al registrar usuario");
-    }
+        // Crear objeto usuario con contraseña en texto plano
+        Usuarios nuevo = new Usuarios(nombre, correo, passPlano, rol);
+
+        // Generar secreto OTP
+        GoogleAuthenticator gAuth = new GoogleAuthenticator();
+        GoogleAuthenticatorKey key = gAuth.createCredentials();
+        String otpSecret = key.getKey();
+
+        nuevo.setOtpSecret(otpSecret);
+        nuevo.setOtpEnabled(true);
+
+
+        if (dao.registrarUsuario(nuevo)) {
+
+            JOptionPane.showMessageDialog(null, "Usuario registrado exitosamente.\nEscanee el QR en Google Authenticator.");
+
+            // Generar URL OTPAUTH:// correcta (manual)
+            String otpAuthUrl = "otpauth://totp/" 
+                    + "SistemaVenta" + ":" + correo 
+                    + "?secret=" + otpSecret 
+                    + "&issuer=SistemaVenta"
+                    + "&algorithm=SHA1"
+                    + "&digits=6"
+                    + "&period=30";
+
+            // Mostrar QR
+            mostrarQR(otpAuthUrl);
+
+
+            LimpiarCampos();
+            this.dispose();
+            new Login().setVisible(true);
+
+        } else {
+            JOptionPane.showMessageDialog(null, "Error al registrar usuario");
+        }
+
 
     
     
