@@ -19,9 +19,7 @@ public class Proveedores extends javax.swing.JFrame {
     
     private login usuario;
 
-//public void setUsuario(login usuario) {
-//    this.usuario = usuario;
-//}
+
 
     public Proveedores(login usuario) {
         this.usuario = usuario;
